@@ -1,0 +1,4 @@
+cat load-pdbs.vmd 
+foreach i $argv { 
+  mol new $i 
+} 
