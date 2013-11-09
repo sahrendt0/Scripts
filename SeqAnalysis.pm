@@ -14,56 +14,58 @@ package SeqAnalysis;
 #  [x] transcribe to RNA	: transcribe(str dna)
 #  [x] motif finding		: getMotifPos(str seq, str match)
 #  [x] 6 frame translation	: getSixFrame(str dna)
+#  [ ] reverse translation	: revTrans(str prot)
 ########################
 use strict;
 use warnings;
 use Bio::Perl;
 use base 'Exporter';  # to export our subroutines
 
-our @EXPORT = qw(getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe); # export always
+our @EXPORT = qw(revTrans getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe); # export always
 
-our %CODONS_3 = ("MET" => {"ATG"},
-                 "ILE" => {"ATA","ATC","ATT"},
-                 "ARG" => {"CGG","CGT","CGA","CGC","AGG","AGA"},
-                 "GLN" => {"CAG","CAA"},
-                 "HIS" => {"CAC","CAT"},
-                 "PRO" => {"CCA","CCG","CCC","CCT"},
-                 "LEU" => {"CTT","CTA","CTC","CTG","TTA","TTG"},
-                 "TRP" => {"TGG"},
-                 "CYS" => {"TGC","TGT"},
-                 "TYR" => {"TAT","TAC"},
-                 "PHE" => {"TTT","TTC"},
-                 "GLY" => {"GGG","GGT","GGC","GGA"},
-                 "GLU" => {"GAA","GAG"},
-                 "ASP" => {"GAT","GAC"},
-                 "ALA" => {"GCC","GCA","GCT","GCG"},
-                 "VAL" => {"GTA","GTC","GTG","GTT"},
-                 "SER" => {"TCA","TCT","TCG","TCC","ATC","AGT"},
-                 "LYS" => {"AAA","AAG"},
-                 "ASN" => {"AAT","AAC"},
-                 "THR" => {"ACA","ACT","ACC","ACG"},
-                 "***" => {"TGA","TAA","TAG"});
-our %CODONS_1 = ("M" => {"ATG"},
-                 "I" => {"ATA","ATC","ATT"},
-                 "R" => {"CGG","CGT","CGA","CGC","AGG","AGA"},
-                 "Q" => {"CAG","CAA"},
-                 "H" => {"CAC","CAT"},
-                 "P" => {"CCA","CCG","CCC","CCT"},
-                 "L" => {"CTT","CTA","CTC","CTG","TTA","TTG"},
-                 "W" => {"TGG"},
-                 "C" => {"TGC","TGT"},
-                 "Y" => {"TAT","TAC"},
-                 "F" => {"TTT","TTC"},
-                 "G" => {"GGG","GGT","GGC","GGA"},
-                 "E" => {"GAA","GAG"},
-                 "D" => {"GAT","GAC"},
-                 "A" => {"GCC","GCA","GCT","GCG"},
-                 "V" => {"GTA","GTC","GTG","GTT"},
-                 "S" => {"TCA","TCT","TCG","TCC","ATC","AGT"},
-                 "K" => {"AAA","AAG"},
-                 "N" => {"AAT","AAC"},
-                 "T" => {"ACA","ACT","ACC","ACG"},
-                 "***" => {"TGA","TAA","TAG"});
+our %CODONS_3 = ("MET" => ["ATG"],
+                 "ILE" => ["ATA","ATC","ATT"],
+                 "ARG" => ["CGG","CGT","CGA","CGC","AGG","AGA"],
+                 "GLN" => ["CAG","CAA"],
+                 "HIS" => ["CAC","CAT"],
+                 "PRO" => ["CCA","CCG","CCC","CCT"],
+                 "LEU" => ["CTT","CTA","CTC","CTG","TTA","TTG"],
+                 "TRP" => ["TGG"],
+                 "CYS" => ["TGC","TGT"],
+                 "TYR" => ["TAT","TAC"],
+                 "PHE" => ["TTT","TTC"],
+                 "GLY" => ["GGG","GGT","GGC","GGA"],
+                 "GLU" => ["GAA","GAG"],
+                 "ASP" => ["GAT","GAC"],
+                 "ALA" => ["GCC","GCA","GCT","GCG"],
+                 "VAL" => ["GTA","GTC","GTG","GTT"],
+                 "SER" => ["TCA","TCT","TCG","TCC","ATC","AGT"],
+                 "LYS" => ["AAA","AAG"],
+                 "ASN" => ["AAT","AAC"],
+                 "THR" => ["ACA","ACT","ACC","ACG"],
+                 "***" => ["TGA","TAA","TAG"]);
+
+our %CODONS_1 = ("M" => ["ATG"],
+                 "I" => ["ATA","ATC","ATT"],
+                 "R" => ["CGG","CGT","CGA","CGC","AGG","AGA"],
+                 "Q" => ["CAG","CAA"],
+                 "H" => ["CAC","CAT"],
+                 "P" => ["CCA","CCG","CCC","CCT"],
+                 "L" => ["CTT","CTA","CTC","CTG","TTA","TTG"],
+                 "W" => ["TGG"],
+                 "C" => ["TGC","TGT"],
+                 "Y" => ["TAT","TAC"],
+                 "F" => ["TTT","TTC"],
+                 "G" => ["GGG","GGT","GGC","GGA"],
+                 "E" => ["GAA","GAG"],
+                 "D" => ["GAT","GAC"],
+                 "A" => ["GCC","GCA","GCT","GCG"],
+                 "V" => ["GTA","GTC","GTG","GTT"],
+                 "S" => ["TCA","TCT","TCG","TCC","ATC","AGT"],
+                 "K" => ["AAA","AAG"],
+                 "N" => ["AAT","AAC"],
+                 "T" => ["ACA","ACT","ACC","ACG"],
+                 "*" => ["TGA","TAA","TAG"]);
 
 #our %AA = ("ATG" => "M",
 #           "ATA" => "I",
@@ -109,15 +111,21 @@ sub seqTranslate
 
 #####
 ## Subroutine: revTrans
-#    Input: protein string
+#    Input: protein string (one-letter)
 #    Returns: total num of possible RNA strings for protein (mod 1,000,000)
 ########
 sub revTrans
 {
   my $prot = shift @_;
-  my $num_RNA = 0;
-  
-
+  my $num_RNA = 1;
+  if($prot !~ /\*$/)
+  {
+    $prot .= "*";
+  }
+  foreach my $aa (split(//,$prot))
+  {
+    $num_RNA *= scalar(@{$CODONS_1{$aa}});
+  }
   return ($num_RNA%1000000);
 }
 
