@@ -16,14 +16,15 @@ package SeqAnalysis;
 #  [x] 6 frame translation	: getSixFrame(str dna)
 #  [ ] reverse translation	: revTrans(str prot)
 #  [x] get profile from align	: getProfile(hash_ref alignment)
-#  [ ] get consensus from prof	: getConsensus(hash_ref profile)
+#  [x] get consensus from prof	: getConsensus(hash_ref profile)
+#  [x] remove an intron		: removeIntron(str dna, str intron)
 ########################
 use strict;
 use warnings;
 use Bio::Perl;
 use base 'Exporter';  # to export our subroutines
 
-our @EXPORT = qw(getConsensus getProfile revTrans getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe); # export always
+our @EXPORT = qw(removeIntron getConsensus getProfile revTrans getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe); # export always
 
 our %CODONS_3 = ("MET" => ["ATG"],
                  "ILE" => ["ATA","ATC","ATT"],
@@ -98,6 +99,24 @@ our %CODONS_1 = ("M" => ["ATG"],
 # 65                  "T" => {"ACA","ACT","ACC","ACG"},
 # 66                  "***" => {"TGA","TAA","TAG"});
 #);
+
+#####
+## Subroutine: removeIntron
+#    Input: dna string and intron
+#    Returns: DNA string without intron
+########
+sub removeIntron
+{
+  my $seq = shift @_;
+  my $intron = shift @_;
+  my $result = $seq;
+  if($seq =~ /(.*)$intron(.*)/)
+  {
+    $result = $1.$2;
+  }
+  return $result;
+}
+
 
 #####
 ## Subroutine: getConsensus
