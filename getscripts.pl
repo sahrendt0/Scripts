@@ -1,13 +1,14 @@
 #!/usr/bin/perl -w
 # Script: getscripts.pl
-# Description: Produces scripts.txt containing all of the custom scripts in ~/scripts
+# Description: Produces README.md containing all of the custom scripts in ~/scripts
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
-# Date: 1.24.13
+# Date: 11.15.13
 #       v.1.0
 #       v.1.1 Add support for R or C/C++ files
 #       v.1.2 Change home dir
 #       v.1.3 Add support for Ruby or Python files
+#       v.1.5 updated for Github & added support for .pm files
 #############################
 # Usage: getscripts.pl
 ############################
@@ -15,7 +16,7 @@
 use strict;
 
 my $dir = ".";
-my $ext = "[pl|c|R|rb|py]";
+my $ext = "[pl|c|R|rb|py|pm]";
 
 my @scripts = glob '*.{pl,c,R,rb,py}';
 =begin COMMENT
@@ -25,14 +26,8 @@ close(DIR);
 =cut
 @scripts = sort @scripts;
 my $len = 0;
-open(OUT,">scripts.txt");
-print OUT "+-";
-for(1..(length($dir)+16)){print OUT "-";}
-print OUT "-+\n";
-print OUT "| Custom scripts: $dir |\n";
-print OUT "+-";
-for(1..(length($dir)+16)){print OUT "-";}
-print OUT "-+\n\n";
+open(OUT,">README.md");
+## Print HEADER
 foreach my $script (@scripts)
 {
 	print OUT $script;
@@ -62,7 +57,7 @@ foreach my $script (@scripts)
 		chomp($line);
 		if($line =~ m/^[#|*]+ Description/i){print OUT substr($line,15);}
 	}
-	print OUT "\n";
+	print OUT "<br>\n";
 	close(IN);
 }
 close(OUT);
