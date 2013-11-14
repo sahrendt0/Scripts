@@ -3,7 +3,7 @@ package SeqAnalysis;
 # Description: Perl module containing often-used subroutines for sequence processing
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
-# Date: 11.5.13
+# Date: 11.13.13
 #######################
 # Functionality includes:
 #  [x] gc content		: getGC(str dna)
@@ -15,6 +15,7 @@ package SeqAnalysis;
 #  [x] motif finding		: getMotifPos(str seq, str match)
 #  [x] 6 frame translation	: getSixFrame(str dna)
 #  [ ] reverse translation	: revTrans(str prot)
+#  [ ] get profile from align	: getProfile(hash_ref alignment)
 ########################
 use strict;
 use warnings;
