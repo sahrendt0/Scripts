@@ -18,7 +18,7 @@ use strict;
 my $dir = ".";
 my $ext = "[pl|c|R|rb|py|pm]";
 
-my @scripts = glob '*.{pl,c,R,rb,py}';
+my @scripts = glob '*.{pl,c,R,rb,py,pm}';
 =begin COMMENT
 opendir(DIR,$dir) or die "Can't open $dir\n";
 my @scripts = grep { /\.$ext$/} readdir(DIR);

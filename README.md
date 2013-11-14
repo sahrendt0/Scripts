@@ -1,3 +1,4 @@
+SeqAnalysis.pm. . . . . Perl module containing often-used subroutines for sequence processing<br>
 bp_sreformat.pl . . . . <br>
 convert_all.pl. . . . . Converts all files of one type in a directory to a second type using bp_sreformat<br>
 gbk_extract.pl. . . . . Pulls out descriptions from genbank files<br>
