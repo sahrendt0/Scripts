@@ -23,7 +23,7 @@ GetOptions ('i|input=s' => \$input,
             'h|help'    => \$help,
             'v|verbose' => \$verb,
             'd|dir=s'   => \$dir);
-my $usage = "Usage: gethelices2.pl -i input |-l list\n";
+my $usage = "Usage: pbdHelix.pl -d -i input |-l list\n";
 die $usage if $help;
 #die $usage if (!$input or !$list);
 
@@ -47,7 +47,6 @@ foreach my $file (@infiles)
                           NoANISIG => 1);   # filter SIGATM, SIGUIJ, ANISOU lines
   print $file,"\n";
   $PDB->Parse;
-  $PDB->Write(FileName => "test.pdb");
   $filename = (split(/\//,$file))[-1];
   $filename = (split(/\./,$filename))[0];
   open(OUT,">$filename\_A\_helices.pdb");
