@@ -15,14 +15,15 @@ package SeqAnalysis;
 #  [x] motif finding		: getMotifPos(str seq, str match)
 #  [x] 6 frame translation	: getSixFrame(str dna)
 #  [ ] reverse translation	: revTrans(str prot)
-#  [ ] get profile from align	: getProfile(hash_ref alignment)
+#  [x] get profile from align	: getProfile(hash_ref alignment)
+#  [ ] get consensus from prof	: getConsensus(hash_ref profile)
 ########################
 use strict;
 use warnings;
 use Bio::Perl;
 use base 'Exporter';  # to export our subroutines
 
-our @EXPORT = qw(revTrans getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe); # export always
+our @EXPORT = qw(getConsensus getProfile revTrans getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe); # export always
 
 our %CODONS_3 = ("MET" => ["ATG"],
                  "ILE" => ["ATA","ATC","ATT"],
@@ -97,6 +98,72 @@ our %CODONS_1 = ("M" => ["ATG"],
 # 65                  "T" => {"ACA","ACT","ACC","ACG"},
 # 66                  "***" => {"TGA","TAA","TAG"});
 #);
+
+#####
+## Subroutine: getConsensus
+#    Input:
+#    Returns: 
+########
+sub getConsensus
+{
+  my %profile = %{shift @_};
+  my $cons = "";
+  my $al_len = scalar @{$profile{'A'}};
+  for(my $i=0;$i<$al_len;$i++)
+  {
+    my $max = 0;
+    my $c = "";
+    foreach my $key (keys %profile)
+    {
+      my $value = $profile{$key}[$i];
+      if($value > $max)
+      {
+        $max = $value;
+        $c = $key;
+      }
+    }
+   $cons .= $c;
+  }
+
+  return $cons;
+}
+
+#####
+## Subroutine: getProfile
+#    Input: hash of aligned sequences
+#    Returns: hash of profile
+########
+sub getProfile
+{
+  my $align = shift @_; # hash reference
+  my @accnos = sort(keys(%{$align}));  
+  my $al_len = length($align->{$accnos[0]});
+  
+  my @init;
+  my %profile = ('A' => [],
+                 'T' => [],
+                 'G' => [],
+                 'C' => []);
+
+  for(my $i=0;$i<$al_len;$i++)
+  {
+    foreach my $key (keys %profile)
+    {
+      $profile{$key}[$i] = 0;
+    }
+  }
+ 
+  for(my $i=0;$i<$al_len;$i++)
+  {
+    foreach my $acc (@accnos)
+    {
+      my @seq = split(//,$align->{$acc});
+      $profile{$seq[$i]}[$i]++;
+    }
+  }
+
+  return %profile;
+}
 
 #####
 ## Subroutine: seqTranslate
