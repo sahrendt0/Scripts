@@ -18,13 +18,14 @@ package SeqAnalysis;
 #  [x] get profile from align	: getProfile(hash_ref alignment)
 #  [x] get consensus from prof	: getConsensus(hash_ref profile)
 #  [x] remove an intron		: removeIntron(str dna, str intron)
+#  [x] transition/transversion  : getTTRatio(str dna1, str dna2)
 ########################
 use strict;
 use warnings;
 use Bio::Perl;
 use base 'Exporter';  # to export our subroutines
 
-our @EXPORT = qw(removeIntron getConsensus getProfile revTrans getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe); # export always
+our @EXPORT = qw(getTTRatio removeIntron getConsensus getProfile revTrans getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe); # export always
 
 our %CODONS_3 = ("MET" => ["ATG"],
                  "ILE" => ["ATA","ATC","ATT"],
@@ -99,6 +100,82 @@ our %CODONS_1 = ("M" => ["ATG"],
 # 65                  "T" => {"ACA","ACT","ACC","ACG"},
 # 66                  "***" => {"TGA","TAA","TAG"});
 #);
+
+sub changeType
+{
+  my $base1 = uc(shift @_);
+  my $base2 = uc(shift @_);
+  my $change = "none";
+
+  if($base1 eq "A")
+  {
+    if($base2 eq "G")
+    {
+      $change = "transition";
+    }
+    elsif(($base2 eq "C") or ($base2 eq "T"))
+    {
+      $change = "transversion";
+    }
+  }
+  elsif($base1 eq "G")
+  {
+    if($base2 eq "A")
+    { 
+      $change = "transition";
+    }
+    elsif(($base2 eq "C") or ($base2 eq "T"))
+    { 
+      $change = "transversion";
+    }
+  }
+  elsif($base1 eq "C")
+  {
+    if($base2 eq "T")
+    {    
+      $change = "transition";
+    }
+    elsif(($base2 eq "G") or ($base2 eq "A"))
+    {     
+      $change = "transversion";
+    }
+  }
+  else # T
+  {
+    if($base2 eq "C")
+    {    
+      $change = "transition";
+    }
+    elsif(($base2 eq "G") or ($base2 eq "A"))
+    {    
+      $change = "transversion";
+    }
+  }
+  return $change;
+}
+
+#####
+## Subroutine: getTTRatio
+#    Input: two dna strings
+#    Returns: ratio
+########
+sub getTTRatio
+{
+  my @seq1 = split(//,shift @_);
+  my @seq2 = split(//,shift @_);
+  my %changes = ("transition"  => 0,
+                 "transversion" => 0,
+                 "none"         => 0);
+
+  my $TTRatio = 0;
+
+  for(my $i=0;$i<scalar(@seq1);$i++)
+  {
+    $changes{changeType($seq1[$i],$seq2[$i])}++;
+  }
+  $TTRatio = $changes{"transition"} / $changes{"transversion"};
+  return $TTRatio;
+}
 
 #####
 ## Subroutine: removeIntron
