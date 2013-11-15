@@ -71,35 +71,91 @@ our %CODONS_1 = ("M" => ["ATG"],
                  "T" => ["ACA","ACT","ACC","ACG"],
                  "*" => ["TGA","TAA","TAG"]);
 
-#our %AA = ("ATG" => "M",
-#           "ATA" => "I",
-#           "ATC" => "I",
-#           "ATT" => "I",
-#           "CGG" => "R",
-#           "CGT" => "R",
-#           "CGA" => "R",
-#           "CGC" => "R",
-#           "AGG" => "R",
-#           "AGA" => "R",
-# 49                  "Q" => {"CAG","CAA"},
-# 50                  "H" => {"CAC","CAT"},
-# 51                  "P" => {"CCA","CCG","CCC","CCT"},
-# 52                  "L" => {"CTT","CTA","CTC","CTG","TTA","TTG"},
-# 53                  "W" => {"TGG"},
-# 54                  "C" => {"TGC","TGT"},
-# 55                  "Y" => {"TAT","TAC"},
-# 56                  "F" => {"TTT","TTC"},
-# 57                  "G" => {"GGG","GGT","GGC","GGA"},
-# 58                  "E" => {"GAA","GAG"},
-# 59                  "D" => {"GAT","GAC"},
-# 60                  "A" => {"GCC","GCA","GCT","GCG"},
-# 61                  "V" => {"GTA","GTC","GTG","GTT"},
-# 62                  "S" => {"TCA","TCT","TCG","TCC","ATC","AGT"},
-# 63                  "K" => {"AAA","AAG"},
-# 64                  "N" => {"AAT","AAC"},
-# 65                  "T" => {"ACA","ACT","ACC","ACG"},
-# 66                  "***" => {"TGA","TAA","TAG"});
-#);
+our %prot_mass = ('A' => 71.03711,
+                  'C' => 103.00919,
+                  'D' => 115.02694,
+                  'E' => 129.04259,
+                  'F' => 147.06841,
+                  'G' => 57.02146,
+                  'H' => 137.05891,
+                  'I' => 113.08406,
+                  'K' => 128.09496,
+                  'L' => 113.08406,
+                  'M' => 131.04049,
+                  'N' => 114.04293,
+                  'P' => 97.05276,
+                  'Q' => 128.05858,
+                  'R' => 156.10111,
+                  'S' => 87.03203,
+                  'T' => 101.04768,
+                  'V' => 99.06841,
+                  'W' => 186.07931,
+                  'Y' => 163.06333);
+
+our %AA = ("ATG" => "M",
+           "ATA" => "I",
+           "ATC" => "I",
+           "ATT" => "I",
+           "CGG" => "R",
+           "CGT" => "R",
+           "CGA" => "R",
+           "CGC" => "R",
+           "AGG" => "R",
+           "AGA" => "R",
+           "CAG" => "Q",
+           "CAA" => "Q",
+           "CAC" => "H",
+           "CAT" => "H",
+           "CCA" => "P",
+           "CCG" => "P",
+           "CCC" => "P",
+           "CCT" => "P",
+           "CTT" => "L",
+           "CTA" => "L",
+           "CTC" => "L",
+           "CTG" => "L",
+           "TTA" => "L",
+           "TTG" => "L",
+           "TGG" => "W",
+           "TGC" => "C",
+           "TGT" => "C",
+           "TAT" => "Y",
+           "TAC" => "Y",
+           "TTT" => "F",
+           "TTC" => "F",
+           "GGG" => "G",
+           "GGT" => "G",
+           "GGC" => "G",
+           "GGA" => "G",
+           "GAA" => "E",
+           "GAG" => "E",
+           "GAT" => "D",
+           "GAC" => "D",
+           "GCC" => "A",
+           "GCA" => "A",
+           "GCT" => "A",
+           "GCG" => "A",
+           "GTA" => "V",
+           "GTC" => "V",
+           "GTG" => "V",
+           "GTT" => "V",
+           "TCA" => "S",
+           "TCT" => "S",
+           "TCG" => "S",
+           "TCC" => "S",
+           "ATC" => "S",
+           "AGT" => "S",
+           "AAA" => "K",
+           "AAG" => "K",
+           "AAT" => "N",
+           "AAC" => "N",
+           "ACA" => "T",
+           "ACT" => "T",
+           "ACC" => "T",
+           "ACG" => "T",
+           "TGA" => "*",
+           "TAA" => "*",
+           "TAG" => "*");
 
 sub changeType
 {
@@ -397,41 +453,12 @@ sub transcribe
 sub getProtMass
 {
   my $seq = shift @_;
-  my %mass_table = initProtMass();
   my $mass = 0;
   foreach my $res (split(//,uc($seq)))
   {
-    $mass += $mass_table{$res};
+    $mass += $prot_mass{$res};
   }
   return $mass;
-}
-
-#####
-## Subroutine: initProtMass
-#    Returns: a hash with amino acid to kDa mass mapping
-#########
-sub initProtMass
-{
-  return my %prot_mass = ( 'A' => 71.03711,
-                           'C' => 103.00919,
-                           'D' => 115.02694,
-                           'E' => 129.04259,
-                           'F' => 147.06841,
-                           'G' => 57.02146,
-                           'H' => 137.05891,
-                           'I' => 113.08406,
-                           'K' => 128.09496,
-                           'L' => 113.08406,
-                           'M' => 131.04049,
-                           'N' => 114.04293,
-                           'P' => 97.05276,
-                           'Q' => 128.05858,
-                           'R' => 156.10111,
-                           'S' => 87.03203,
-                           'T' => 101.04768,
-                           'V' => 99.06841,
-                           'W' => 186.07931,
-                           'Y' => 163.06333);
 }
 
 #####
