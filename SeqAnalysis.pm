@@ -3,7 +3,7 @@ package SeqAnalysis;
 # Description: Perl module containing often-used subroutines for sequence processing
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
-# Date: 11.11.13
+# Date: 11.13.13
 #######################
 # Functionality includes:
 #  [x] gc content		: getGC(str dna)
@@ -15,6 +15,10 @@ package SeqAnalysis;
 #  [x] motif finding		: getMotifPos(str seq, str match)
 #  [x] 6 frame translation	: getSixFrame(str dna)
 #  [ ] reverse translation	: revTrans(str prot)
+#  [x] get profile from align	: getProfile(hash_ref alignment)
+#  [x] get consensus from prof	: getConsensus(hash_ref profile)
+#  [x] remove an intron		: removeIntron(str dna, str intron)
+#  [x] transition/transversion  : getTTRatio(str dna1, str dna2)
 #  [x] get sequences		: getSeqs(str fasta_filename, arrayref accnos)
 ########################
 use strict;
@@ -22,7 +26,7 @@ use warnings;
 use Bio::Perl;
 use base 'Exporter';  # to export our subroutines
 
-our @EXPORT = qw(getSeqs revTrans getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe); # export always
+our @EXPORT = qw(getSeqs getTTRatio removeIntron getConsensus getProfile revTrans getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe); # export always
 
 our %CODONS_3 = ("MET" => ["ATG"],
                  "ILE" => ["ATA","ATC","ATT"],
@@ -68,35 +72,91 @@ our %CODONS_1 = ("M" => ["ATG"],
                  "T" => ["ACA","ACT","ACC","ACG"],
                  "*" => ["TGA","TAA","TAG"]);
 
-#our %AA = ("ATG" => "M",
-#           "ATA" => "I",
-#           "ATC" => "I",
-#           "ATT" => "I",
-#           "CGG" => "R",
-#           "CGT" => "R",
-#           "CGA" => "R",
-#           "CGC" => "R",
-#           "AGG" => "R",
-#           "AGA" => "R",
-# 49                  "Q" => {"CAG","CAA"},
-# 50                  "H" => {"CAC","CAT"},
-# 51                  "P" => {"CCA","CCG","CCC","CCT"},
-# 52                  "L" => {"CTT","CTA","CTC","CTG","TTA","TTG"},
-# 53                  "W" => {"TGG"},
-# 54                  "C" => {"TGC","TGT"},
-# 55                  "Y" => {"TAT","TAC"},
-# 56                  "F" => {"TTT","TTC"},
-# 57                  "G" => {"GGG","GGT","GGC","GGA"},
-# 58                  "E" => {"GAA","GAG"},
-# 59                  "D" => {"GAT","GAC"},
-# 60                  "A" => {"GCC","GCA","GCT","GCG"},
-# 61                  "V" => {"GTA","GTC","GTG","GTT"},
-# 62                  "S" => {"TCA","TCT","TCG","TCC","ATC","AGT"},
-# 63                  "K" => {"AAA","AAG"},
-# 64                  "N" => {"AAT","AAC"},
-# 65                  "T" => {"ACA","ACT","ACC","ACG"},
-# 66                  "***" => {"TGA","TAA","TAG"});
-#);
+our %prot_mass = ('A' => 71.03711,
+                  'C' => 103.00919,
+                  'D' => 115.02694,
+                  'E' => 129.04259,
+                  'F' => 147.06841,
+                  'G' => 57.02146,
+                  'H' => 137.05891,
+                  'I' => 113.08406,
+                  'K' => 128.09496,
+                  'L' => 113.08406,
+                  'M' => 131.04049,
+                  'N' => 114.04293,
+                  'P' => 97.05276,
+                  'Q' => 128.05858,
+                  'R' => 156.10111,
+                  'S' => 87.03203,
+                  'T' => 101.04768,
+                  'V' => 99.06841,
+                  'W' => 186.07931,
+                  'Y' => 163.06333);
+
+our %AA = ("ATG" => "M",
+           "ATA" => "I",
+           "ATC" => "I",
+           "ATT" => "I",
+           "CGG" => "R",
+           "CGT" => "R",
+           "CGA" => "R",
+           "CGC" => "R",
+           "AGG" => "R",
+           "AGA" => "R",
+           "CAG" => "Q",
+           "CAA" => "Q",
+           "CAC" => "H",
+           "CAT" => "H",
+           "CCA" => "P",
+           "CCG" => "P",
+           "CCC" => "P",
+           "CCT" => "P",
+           "CTT" => "L",
+           "CTA" => "L",
+           "CTC" => "L",
+           "CTG" => "L",
+           "TTA" => "L",
+           "TTG" => "L",
+           "TGG" => "W",
+           "TGC" => "C",
+           "TGT" => "C",
+           "TAT" => "Y",
+           "TAC" => "Y",
+           "TTT" => "F",
+           "TTC" => "F",
+           "GGG" => "G",
+           "GGT" => "G",
+           "GGC" => "G",
+           "GGA" => "G",
+           "GAA" => "E",
+           "GAG" => "E",
+           "GAT" => "D",
+           "GAC" => "D",
+           "GCC" => "A",
+           "GCA" => "A",
+           "GCT" => "A",
+           "GCG" => "A",
+           "GTA" => "V",
+           "GTC" => "V",
+           "GTG" => "V",
+           "GTT" => "V",
+           "TCA" => "S",
+           "TCT" => "S",
+           "TCG" => "S",
+           "TCC" => "S",
+           "ATC" => "S",
+           "AGT" => "S",
+           "AAA" => "K",
+           "AAG" => "K",
+           "AAT" => "N",
+           "AAC" => "N",
+           "ACA" => "T",
+           "ACT" => "T",
+           "ACC" => "T",
+           "ACG" => "T",
+           "TGA" => "*",
+           "TAA" => "*",
+           "TAG" => "*");
 
 #####
 ## Subroutine:
@@ -124,6 +184,166 @@ sub getSeqs
       $seq_out->write_seq($fasta{$acc});
     }
   }
+}
+
+sub changeType
+{
+  my $base1 = uc(shift @_);
+  my $base2 = uc(shift @_);
+  my $change = "none";
+
+  if($base1 eq "A")
+  {
+    if($base2 eq "G")
+    {
+      $change = "transition";
+    }
+    elsif(($base2 eq "C") or ($base2 eq "T"))
+    {
+      $change = "transversion";
+    }
+  }
+  elsif($base1 eq "G")
+  {
+    if($base2 eq "A")
+    { 
+      $change = "transition";
+    }
+    elsif(($base2 eq "C") or ($base2 eq "T"))
+    { 
+      $change = "transversion";
+    }
+  }
+  elsif($base1 eq "C")
+  {
+    if($base2 eq "T")
+    {    
+      $change = "transition";
+    }
+    elsif(($base2 eq "G") or ($base2 eq "A"))
+    {     
+      $change = "transversion";
+    }
+  }
+  else # T
+  {
+    if($base2 eq "C")
+    {    
+      $change = "transition";
+    }
+    elsif(($base2 eq "G") or ($base2 eq "A"))
+    {    
+      $change = "transversion";
+    }
+  }
+  return $change;
+}
+
+#####
+## Subroutine: getTTRatio
+#    Input: two dna strings
+#    Returns: ratio
+########
+sub getTTRatio
+{
+  my @seq1 = split(//,shift @_);
+  my @seq2 = split(//,shift @_);
+  my %changes = ("transition"  => 0,
+                 "transversion" => 0,
+                 "none"         => 0);
+
+  my $TTRatio = 0;
+
+  for(my $i=0;$i<scalar(@seq1);$i++)
+  {
+    $changes{changeType($seq1[$i],$seq2[$i])}++;
+  }
+  $TTRatio = $changes{"transition"} / $changes{"transversion"};
+  return $TTRatio;
+}
+
+#####
+## Subroutine: removeIntron
+#    Input: dna string and intron
+#    Returns: DNA string without intron
+########
+sub removeIntron
+{
+  my $seq = shift @_;
+  my $intron = shift @_;
+  my $result = $seq;
+  if($seq =~ /(.*)$intron(.*)/)
+  {
+    $result = $1.$2;
+  }
+  return $result;
+}
+
+
+#####
+## Subroutine: getConsensus
+#    Input:
+#    Returns: 
+########
+sub getConsensus
+{
+  my %profile = %{shift @_};
+  my $cons = "";
+  my $al_len = scalar @{$profile{'A'}};
+  for(my $i=0;$i<$al_len;$i++)
+  {
+    my $max = 0;
+    my $c = "";
+    foreach my $key (keys %profile)
+    {
+      my $value = $profile{$key}[$i];
+      if($value > $max)
+      {
+        $max = $value;
+        $c = $key;
+      }
+    }
+   $cons .= $c;
+  }
+
+  return $cons;
+}
+
+#####
+## Subroutine: getProfile
+#    Input: hash of aligned sequences
+#    Returns: hash of profile
+########
+sub getProfile
+{
+  my $align = shift @_; # hash reference
+  my @accnos = sort(keys(%{$align}));  
+  my $al_len = length($align->{$accnos[0]});
+  
+  my @init;
+  my %profile = ('A' => [],
+                 'T' => [],
+                 'G' => [],
+                 'C' => []);
+
+  for(my $i=0;$i<$al_len;$i++)
+  {
+    foreach my $key (keys %profile)
+    {
+      $profile{$key}[$i] = 0;
+    }
+  }
+ 
+  for(my $i=0;$i<$al_len;$i++)
+  {
+    foreach my $acc (@accnos)
+    {
+      my @seq = split(//,$align->{$acc});
+      $profile{$seq[$i]}[$i]++;
+    }
+  }
+
+  return %profile;
 }
 
 #####
@@ -262,41 +482,12 @@ sub transcribe
 sub getProtMass
 {
   my $seq = shift @_;
-  my %mass_table = initProtMass();
   my $mass = 0;
   foreach my $res (split(//,uc($seq)))
   {
-    $mass += $mass_table{$res};
+    $mass += $prot_mass{$res};
   }
   return $mass;
-}
-
-#####
-## Subroutine: initProtMass
-#    Returns: a hash with amino acid to kDa mass mapping
-#########
-sub initProtMass
-{
-  return my %prot_mass = ( 'A' => 71.03711,
-                           'C' => 103.00919,
-                           'D' => 115.02694,
-                           'E' => 129.04259,
-                           'F' => 147.06841,
-                           'G' => 57.02146,
-                           'H' => 137.05891,
-                           'I' => 113.08406,
-                           'K' => 128.09496,
-                           'L' => 113.08406,
-                           'M' => 131.04049,
-                           'N' => 114.04293,
-                           'P' => 97.05276,
-                           'Q' => 128.05858,
-                           'R' => 156.10111,
-                           'S' => 87.03203,
-                           'T' => 101.04768,
-                           'V' => 99.06841,
-                           'W' => 186.07931,
-                           'Y' => 163.06333);
 }
 
 #####
