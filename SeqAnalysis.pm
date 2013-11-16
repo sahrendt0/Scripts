@@ -3,7 +3,7 @@ package SeqAnalysis;
 # Description: Perl module containing often-used subroutines for sequence processing
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
-# Date: 11.13.13
+# Date: 11.15.13
 #######################
 # Functionality includes:
 #  [x] gc content		: getGC(str dna)
