@@ -5,6 +5,15 @@
 # email: sahrendt0@gmail.com
 # Date: 11.18.2013
 ##################################
+# Usage: ssearchrank.pl -i score_file
+#################################
+# Read through the scores file, which contains (tab-delimited) accession number and e-val score
+# Next, read through each of the ssearch results file
+# If the score for a particular transcript is better in the ssearch result file compared to the initial query,
+#   store it in the hash
+# Then
+#
+
 use warnings;
 use strict;
 use Getopt::Long;
@@ -61,16 +70,54 @@ foreach my $file (@ssearch_files)
         if($hsp->evalue < $score{$result->query_name})
         {
           #print $score{$result->query_name}, " : ", $hsp->evalue,"\n";
-          $ssearch{$result->query_name}{$hit_org}{$hit->name}{"eval"} = $hsp->evalue;
+          $ssearch{$result->query_name}{$hit_org}{$hit->name} = $hsp->evalue;
         }
-      }
+      } # while hsp
+    } # while hit
+  } # while result
+} # foreach
+
+## 
+# Flatten the hash a little so that we can sort only on the scores
+my %flat_hash;
+#print "Gene\tHit Org\tcount\tTop scoring\n";
+foreach my $gene (keys %ssearch)
+{
+  foreach my $org (keys %{$ssearch{$gene}})
+  {
+    foreach my $hit (keys %{$ssearch{$gene}{$org}})
+    {
+      my $flat_key = join("\t",$org,$hit);
+      $flat_hash{$gene}{$flat_key} = $ssearch{$gene}{$org}{$hit};
     }
+#    my @scores = sort { $ssearch{$gene}{$org}{$a} <=> $ssearch{$gene}{$org}{$b} } keys %{$ssearch{$gene}{$org}};
+#    print "$gene\t";
+#    print "$org\t";
+#    print scalar(@scores),"\t";
+#    print $ssearch{$gene}{$org}{$scores[0]},"\n";
   }
 }
 
-#print join("\n",@ssearch_files);
+##
+# Print out the flattened hash, sorted by the scores
+# Basically, for each transcript, want to see what the best hit is across all ssearch results files
+##
+# Filter out things that hit Piromyces
+# This way, we can see if poorly scoring Neocallo hits were just called incorrectly
+open(RE,">rescored");
+print RE "Gene\tHit Org\tTop hit\tScore\tOld Score\n";
+foreach my $gene (sort keys %flat_hash)
+{
+  my @keys = sort { $flat_hash{$gene}{$a} <=> $flat_hash{$gene}{$b} } keys %{$flat_hash{$gene}};
+  next if ($keys[0] =~ /PirE/i);
+  print RE "$gene\t";
+  print RE "$keys[0]\t";
+  print RE $flat_hash{$gene}{$keys[0]},"\t";
+  print RE $score{$gene},"\n";
+}
+close(RE);
 
-print Dumper \%ssearch;
+#print Dumper \%flat_hash;
 
 warn "Done.\n";
 exit(0);
