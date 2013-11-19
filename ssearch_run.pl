@@ -17,7 +17,7 @@ my $help = 0;
 my $fasta_file;
 my $abbr;
 my $eval = 0.1;
-my $gdir = "/rhome/sahrendt/Data/genomes/pep/";
+my $gdir = "/rhome/sahrendt/bigdata/Genomes/Protein/";
 my $cwd = getcwd();
 
 GetOptions ('f|fasta=s' => \$fasta_file,
@@ -36,22 +36,25 @@ opendir(DIR,$gdir);
 my @prots = grep {/\.fasta$/} readdir(DIR);
 closedir(DIR);
 
+open(OUT,">$abbr\_ssearch.sh");
 if(($fasta_file) && ($abbr))
 {
   open(TEST,"<$fasta_file") || die "Can't open $fasta_file\n";
   close(TEST);
-  print "cd $cwd\n";
+  print OUT "cd $cwd\n";
   foreach my $file (@prots)
   {
-    print "ssearch36 "; # Script
-    print "-S "; # filter lowercase residues 
-    print "-m 8C "; # output format: Blast, tabular
-    print "-E $eval "; # e-val cutoff
-    print "-k 10000 "; # num of shuffles
-    print "./$fasta_file $gdir/$file > $abbr-vs-",substr($file,0,4),".ssearch\n";
+    print OUT "ssearch36 "; # Script
+    print OUT "-S "; # filter lowercase residues 
+    print OUT "-m 8C "; # output format: Blast, tabular
+    print OUT "-E $eval "; # e-val cutoff
+    print OUT "-k 10000 "; # num of shuffles
+    print OUT "./$fasta_file $gdir/$file > $abbr-vs-",substr($file,0,4),".ssearch\n";
   }
+  print `chmod 744 $abbr\_ssearch.sh`;
 }
 else
 {
   print "Usage: perl ssearch_run.pl fasta_file abbr\n";
 }
+close(OUT);
