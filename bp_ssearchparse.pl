@@ -3,7 +3,7 @@
 # Description: Parses all ssearch files in the given directory; Gathers counts and sequences.
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
-# Date: 9.23.13
+# Date: 11.18.13
 #####################################
 # [x]: Hash of organisms
 # [ ]: Array of genes + counts
@@ -19,31 +19,30 @@ use Getopt::Long;
 
 ## Structures, variables, etc.
 my (%peps, %taxa, @genes);
-my $pep_dir = "/rhome/sahrendt/Data/genomes/pep/";
+my $gen_dir = "/rhome/sahrendt/bigdata/Genomes";
+my $pep_dir = "$gen_dir/Protein";
 my @result_list; # list of ssearch files
 my @proteomes;   # list of proteomes
 my @genelist;    # list of gene IDs in $genes_file
 
 ## Command line options
 my $ssearch_dir = ".";   # directory of ssearch results
-my $taxonlist_file = "taxonlist";
+my $taxonlist_file = "$gen_dir/taxonlist_mod";
 my $genes_file; # Fasta file containing gene(s) used in ssearch
 my @total_orgs; # organisms queried
-my $verbose = 0;
-my $help = 0;
+my $verbose;
+my $help;
 my $abbrev;
 GetOptions ('d|dir=s'    => \$ssearch_dir, 
             't|taxon=s'  => \$taxonlist_file,
             'f|fasta=s'  => \$genes_file,
-            'v|verbose+' => \$verbose,
-            'h|help+'    => \$help,
+            'v|verbose'  => \$verbose,
+            'h|help'     => \$help,
             'a|abbrev=s' => \$abbrev);
 
-if($help)
-{
-  print "Usage: bp_ssearchparse.pl -f fastafile -t taxon_list -a abbrev\n";
-  exit;
-}
+my $usage = "Usage: bp_ssearchparse.pl -f fastafile -t taxon_list -a abbrev\n";
+die $usage if ($help);
+die $usage if (!$genes_file);
 
 ############
 ## 0. Check for ssearch files
@@ -68,7 +67,9 @@ closedir(PEP);
 foreach my $prot (@proteomes)
 {
   if($verbose){print $prot,"\n";}
-  my $spec = (split(/\./,$prot))[0];
+  my $spec = (split(/\_/,$prot))[0];
+  $spec = substr($spec,0,4);
+  print $spec,"\n";
   my $seqio_obj = Bio::SeqIO->new(-file => "$pep_dir/$prot",
                                   -format => 'fasta');
   while(my $seq = $seqio_obj->next_seq)
@@ -96,9 +97,10 @@ foreach my $line (<TX>)
   $taxa{$ID} = \@info;
 #  print "<$ID><$type><$name>\n";
 }
-#foreach my $key (keys %taxa){  print "$key = ",$taxa{$key}[0],"\n"}
+foreach my $key (keys %taxa){  print "$key = ",$taxa{$key}[0],"\n"}
 close(TX);
 
+__END__
 ############
 ## 3. Array of genes + counts
 ############
@@ -106,7 +108,7 @@ my $fasta_in = Bio::SeqIO->new(-format => 'fasta',
                                -file => $genes_file);
 while(my $gene = $fasta_in->next_seq())
 {
-  print $gene->display_id,"\n";
+  #print $gene->display_id,"\n";
   push (@genelist, $gene->display_id);
 }
 
