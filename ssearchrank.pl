@@ -23,6 +23,7 @@ use strict;
 use Getopt::Long;
 use Bio::SearchIO;
 use Data::Dumper;
+
 #####-----Global Variables-----#####
 my $input;
 my ($help,$verb);
@@ -39,9 +40,12 @@ GetOptions ('i|input=s'  => \$score_file,
             'h|help'     => \$help,
             'v|verbose'  => \$verb,
             'd|dir=s'    => \$dir);
+
 my $usage = "Usage: ssearchrank.pl -i score_file\n";
 die $usage if $help;
+die "No score file: $!\n$usage" if (!$score_file); 
 
+#####-----Main-----#####
 ## Open score file
 open(ACC,"<$score_file") or die "Can't open $score_file: $!\n";
 while(my $line = <ACC>)
@@ -55,7 +59,7 @@ while(my $line = <ACC>)
 }
 close(ACC);
 
-## Hash other score files
+## Hash result files
 opendir(DIR,$dir);
 @ssearch_files = grep {/\.ssearch$/} readdir(DIR);
 closedir(DIR);
