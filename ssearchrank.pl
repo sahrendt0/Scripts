@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # Script ssearchrank.pl
-# Description: Takes accession numbers and searches many .ssearch files to get the highest scoring match
+# Description: Searches many FASTA search result files to get a better scoring match for a particular transcript
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
 # Date: 11.18.2013
@@ -8,11 +8,15 @@
 # Usage: ssearchrank.pl -i score_file
 #################################
 # Read through the scores file, which contains (tab-delimited) accession number and e-val score
-# Next, read through each of the ssearch results file
-# If the score for a particular transcript is better in the ssearch result file compared to the initial query,
-#   store it in the hash
-# Then
-#
+#   - scores file was made Using unix "cut" on the report file
+#   - ssearchrank.pl *could* be made to take the report file directly
+# Next, read through each of the ssearch results files
+# If the score for a particular transcript is better in the ssearch result file compared to the initial query
+#   - store it in the hash
+# Then for each transcript
+#   - sort all hits across all different species
+#   - only report the top hit IF it didn't come from Piromyces
+###################################
 
 use warnings;
 use strict;
