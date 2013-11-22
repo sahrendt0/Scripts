@@ -1,4 +1,6 @@
 #!/usr/bin/perl
+# Script: mkpl.pl
+# Description: Sets up perl skeleton script
 use warnings;
 use strict;
 use Time::Piece;
