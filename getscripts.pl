@@ -30,34 +30,39 @@ open(OUT,">README.md");
 ## Print HEADER
 foreach my $script (@scripts)
 {
-	print OUT $script;
-	#print "$script\n";	
-	$len = length($script);
-	#print "($len)";
-	if(($len%2)==0)
-	{
-		while($len < 24)
-		{
-			print OUT ". ";
-			$len+=2;		
-		}
-	}
-	else
-	{
-		while($len < 23)
-		{
-			print OUT " .";
-			$len+=2;
-		}
-		print OUT " ";
-	}
-	open(IN,"<$dir/$script") or die "Can't open $dir/$script..\n";
-	foreach my $line (<IN>)
-	{
-		chomp($line);
-		if($line =~ m/^[#|*]+ Description/i){print OUT substr($line,15);}
-	}
-	print OUT "<br>\n";
-	close(IN);
+  print $script,"\n";
+  print OUT $script;
+  #print "$script\n";	
+  $len = length($script);
+  #print "($len)";
+  if(($len%2)==0)
+  {
+    while($len < 24)
+    {
+      print OUT ". ";
+      $len+=2;		
+    }
+  }
+  else
+  {
+    while($len < 23)
+    {
+      print OUT " .";
+      $len+=2;
+    }
+    print OUT " ";
+  }
+  open(IN,"<$dir/$script") or die "Can't open $dir/$script..\n";
+  my $dline = 0; # counter for how many description lines are in a file
+                 # pretty much just used for the "mkpl" and "mkpm" scripts
+  foreach my $line (<IN>)
+  {
+    chomp($line);
+    next if($line !~ m/^[#|*]+ Description/i);
+    $dline++;
+    if($dline == 1){print OUT substr($line,15);}
+  }
+  print OUT "<br>\n";
+  close(IN);
 }
 close(OUT);
