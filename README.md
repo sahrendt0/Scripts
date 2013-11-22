@@ -11,4 +11,4 @@ mkpm.pl . . . . . . . . Sets up a perl module template with comments and standar
 pf2g.pl . . . . . . . . Takes a list of pfam IDs and maps them to go terms<br>
 spc2us.pl . . . . . . . renamer script used for replacing spaces w/ underscores in filenames<br>
 ssearch_run.pl. . . . . Generates batch shell script for ssearches<br>
-ssearchrank.pl. . . . . Takes accession numbers and searches many .ssearch files to get the highest scoring match<br>
+ssearchrank.pl. . . . . Searches many FASTA search result files to get a better scoring match for a particular transcript<br>
