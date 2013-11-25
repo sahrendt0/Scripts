@@ -48,6 +48,7 @@ if($shell)
   }
   print SH "t_coffee $tc_in -n_core=4 -output=fasta_aln\n";
   print SH "hmmbuild --cpu 4 --informat afa $fasta_name.hmm $fasta_name\.fasta_aln\n";
+  print SH "hmmpress $fasta_name.hmm\n";
   close(SH);
   print `chmod 744 fas2hmm.sh`;
 }
@@ -60,4 +61,5 @@ else
   }
   print `t_coffee $tc_in -n_core=4 -output=fasta_aln`;
   print `hmmbuild --cpu 4 --informat afa $fasta_name.hmm $fasta_name\.fasta_aln`;
+  print `hmmpress $fasta_name.hmm`;
 }
