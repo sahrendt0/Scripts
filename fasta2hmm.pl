@@ -10,21 +10,24 @@
 # Convert from Clustalw to aligned Fasta
 # Build HMM
 #######################################
-# Usage: perl fasta2hmm.pl fastafile
+# Usage: perl fasta2hmm.pl fastafile [-c] [-s]
 #######################################
-
 use strict;
 use warnings;
 use Getopt::Long;
+use Cwd;
+
 my $input;
+my $shell; # Make a shell script instead of running
 my ($help,$verb,$clust);
 
 GetOptions ('i|input=s' => \$input,
             'h|help'    => \$help,
             'v|verbose' => \$verb,
-            'c|cluster' => \$clust);
+            'c|cluster' => \$clust,
+            's|shell'   => \$shell);
 
-my $usage = "Usage: perl fasta2hmm.pl -i fastafile\n";
+my $usage = "Usage: perl fasta2hmm.pl -i fastafile [-c] [-s]\n";
 die $usage if $help;
 die "No input file: $!\n$usage" if (!$input);
 
