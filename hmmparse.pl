@@ -19,38 +19,36 @@ use Bio::SearchIO;
 use Getopt::Long qw(:config bundling);
 
 my (%hits,@files,%all_types);
-my $pep_dir = "/rhome/sahrendt/Data/genomes/pep/";
+my $pep_dir = "/rhome/sahrendt/bigdata/Genomes/Protein/";
 my $results_dir = ".";
 my %peps;
 
 ## Command line options
 my $verbose = 0;
-my $all = "";
+my $all;
 my $sequences = "";
 my $input = "";
-my $help = 0;
+my $help;
 GetOptions ('v|verbose+'  => \$verbose, 
             'a|all'       => \$all,
             's|sequences' => \$sequences,
-            'i|input:s'   => \$input,
-            'h|help+'     => \$help);
-
-if($help)
-{
-  print "Usage: perl hmmparse.pl [-v] -a [-i input]\n";
-  print " If -a argument is used, no need for filename\n";
-  exit;
-}
+            'i|input=s'   => \$input,
+            'h|help'     => \$help);
+my $usage = "Usage: perl hmmparse.pl [-v] -a [-i input]\nIf -a argument is used, no need for filename\n";
+die $usage if ($help);
+die $usage if (!$input and !$all);
 
 
 ## Index proteomes for searching
 opendir(PEP,"$pep_dir");
 my @proteomes = grep{ /\.fasta$/ } readdir(PEP);
 closedir(PEP);
+if ($verbose){print join("\n",@proteomes),"\n";}
 
 foreach my $prot (@proteomes)
 {
-  my $spec = (split(/\./,$prot))[0];
+  my $spec = (split(/[\.\_]/,$prot))[0];
+  if($verbose){print $spec,"\n";}
   my $seqio_obj = Bio::SeqIO->new(-file => "$pep_dir/$prot",
                                   -format => 'fasta');
   while(my $seq = $seqio_obj->next_seq)
