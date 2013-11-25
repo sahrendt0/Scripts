@@ -151,5 +151,5 @@ foreach my $o (sort keys %hits)
 }
 close(OUT);
 
-warn("Done.\n");
+warn "Done.\n";
 exit(0);
