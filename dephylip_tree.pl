@@ -25,7 +25,7 @@ GetOptions ("i|input=s" => \$treefile,
 my $usage = "Usage: dephylip_tree.pl -i treefile -c codefile\n";
 
 die $usage if ($help);
-die $usage if (!$treefile or !$codefile);
+die $usage if (!$treefile or !$code_filename);
 
 my $treeIn = Bio::TreeIO->new(-file => $treefile,
                               -format => 'newick');
@@ -36,11 +36,12 @@ my $treeOutNwk = Bio::TreeIO->new(-file => ">$treefile\.newick",
 my $treeOutNex = Bio::TreeIO->new(-file => ">$treefile\.nex",
                                   -format => 'nexus');
 
+## Code files is in format: Name\s+Code
 open(IN,"<$code_filename") || die "Can't open \"$code_filename\".\n";
 foreach my $line (<IN>)
 {
   chomp $line;
-  my ($val,$key) = split(/\t/,$line);
+  my ($val,$key) = split(/\s+/,$line);
   $hash{$key} = $val;
 }
 close(IN);
