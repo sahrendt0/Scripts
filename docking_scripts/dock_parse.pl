@@ -1,27 +1,30 @@
 #!/usr/bin/perl
 # Script: dock_parse.pl
-# Description: Parse an autodock .dlg file
+# Description: Parse an autodock .dlg file and prints to _docking_results
+# Author: Steven Ahrendt
+# email: sahrendt0@gmail.com
+# Date: 11.27.13
 ##############
 # Usage: dock_parse.pl -i dlg_file
-####
+###################
 # Entries are between "" and "________________________________________________________________________________"
 ###############
-
 use strict;
 use warnings;
 use Getopt::Long;
 
+#####-----Global Variables-----#####
 my $infile;
-my $help = 0;
+my ($help,$verb);
 GetOptions ("i|infile=s" => \$infile,
-            "h|help+"    => \$help);
+            "h|help"     => \$help,
+            "v|verbose"  => \$verb);
 
-if($help)
-{
-  print "Usage: dock_parse.pl -i dlg_file\n";
-  exit
-}
+my $usage = "Usage: dock_parse.pl -i dlg_file\n";
+die $usage if($help);
+die "No input\n$usage" if (!$infile);
 
+#####-----Main-----#####
 my $entry_begin = "BEGINNING LAMARCKIAN GENETIC ALGORITHM DOCKING";
 my $entry_end = "________________________________________________________________________________";
 my $max_runs = 100;
@@ -75,14 +78,25 @@ foreach my $line (<IN>)
   }
 }
 close(IN);
+my $in = (split(/\./,$infile))[0];
+my $outstream = ">$in\_docking\_results";
 
-print "$infile:\n";
-print "Run\t";
-print "Free Energy\t";
-print "\n";
+if($verb)
+{
+  $outstream = ">&STDOUT";
+}
+
+open(OUT,$outstream);
+print OUT "#$infile:\n";
+print OUT "Run\t";
+print OUT "Free Energy\t";
+print OUT "\n";
 foreach my $key (sort {$a <=> $b} keys %runs)
 {
-  print "$key\t";
-  print "$runs{$key}\t";
-  print "\n";
+  print OUT "$key\t";
+  print OUT "$runs{$key}\t";
+  print OUT "\n";
 }
+close(OUT);
+warn "Done.\n";
+exit(0);
