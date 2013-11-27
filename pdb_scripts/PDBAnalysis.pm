@@ -12,8 +12,9 @@ package PDBAnalysis;
 #  [x] extract fragment of PDB	: extractFrag(obj PDB, int start, int end)
 #  [x] get PDBs from PDB	: getPDB(str id)
 #  [x] write a specific chain	: writeChain(str id, str chain)
-#  [ ] parse ATOM into array	: 
+#  [x] parse ATOM into array	: parseAtom(str atom_line)
 #  [x] get experiment type	: getExp(obj PDB)
+#  [x] get specific atom	: getAtom(int atom_num)
 ########################
 use strict;
 use warnings;
@@ -21,7 +22,19 @@ use ParsePDB;
 use LWP::Simple;
 use base 'Exporter';  # to export our subroutines
 
-our @EXPORT = qw(parseHelix printHelics getHelices extractFrag writeChain getExp); # export always
+our @EXPORT = qw(getAtom parseAtom parseHelix printHelics getHelices extractFrag writeChain getExp); # export always
+
+#####
+# getAtom
+#
+########
+sub getAtom
+{
+  my $PDB = ParsePDB->new (FileName => shift @_);
+  my $atom_num = shift @_;
+  $PDB->Parse;
+  return $PDB->Get(AtomNumber => $atom_num);
+}
 
 #####
 # getPDB takes an input ID
@@ -65,15 +78,57 @@ sub writeChain
 ###
 # Sub: parseAtom
 #  Expects a PDB ATOM line
+#   if "qt" is provided, treats as pdbqt file
 #  Parses components into array bsed on PDB file format
 #  Returns array
 ######
 sub parseAtom
 {
+  my $isQt = 0;
+  if(scalar(@_) == 2)
+  {
+    $isQt = 1;
+  }
+  my @data = split(//,shift @_);
+  my @parsedData;
   ##
   # PDB file format is based on explicit spacing, not just tab-delimited
-  #   Format documentation can be found: http://www.wwpdb.org/documentation/format33/v3.3.html
+  #   Format documentation can be found: http://www.wwpdb.org/documentation/format33/sect9.html#ATOM
+  #
+  # PDBQT file format is similar, except in columns 71-79 inclusive
+  #   Documentation here: http://autodock.scripps.edu/faqs-help/faq/what-is-the-format-of-a-pdbqt-file/
   #######
+  push(@parsedData,join("",@data[0..5]));   # [0]  "ATOM  "
+  push(@parsedData,join("",@data[6..10]));  # [1]  Atom serial number
+  push(@parsedData,join("",@data[12..15])); # [2]  Atom name
+  push(@parsedData,join("",$data[16]));     # [3]  Alternate location indicator
+  push(@parsedData,join("",@data[17..19])); # [4]  Residue name
+  push(@parsedData,join("",$data[21]));     # [5]  Chain identifier
+  push(@parsedData,join("",@data[22..25])); # [6]  Residue sequence number
+  push(@parsedData,join("",$data[26]));     # [7]  Code for insertion of residues
+  my $x = join("",@data[30..37]);
+  $x =~ s/\s*(\w+)\s*/$1/;
+  push(@parsedData,$x);                     # [8]  X coordinate (in Angstroms)
+  my $y = join("",@data[38..45]);
+  $y =~ s/\s*(\w+)\s*/$1/;
+  push(@parsedData,$y);                     # [9]  Y coordinate (in Angstroms)
+  my $z = join("",@data[46..53]);
+  $z =~ s/\s*(\w+)\s*/$1/;
+  push(@parsedData,$z);                     # [10] Z coordinate (in Angstroms)
+  push(@parsedData,join("",@data[54..59])); # [11] Occupancy
+  push(@parsedData,join("",@data[60..65])); # [12] Temperature factor
+  if($isQt) # PDBQT file
+  { 
+    push(@parsedData,join("",@data[70..75])); # [13] partial charge, %6.3f format
+    push(@parsedData,join("",@data[77..78])); # [14] AutoDock atom-type
+  }
+  else # regular PDB file
+  {
+    push(@parsedData,join("",@data[76..77])); # [13] Element symbol, right-justified
+    push(@parsedData,join("",@data[78..79])); # [14] Charge on the atom
+  }
+
+  return @parsedData;
 }
 
 ###
@@ -90,22 +145,22 @@ sub parseHelix
 
   ##
   # PDB file format is based on explicit spacing, not just tab-delimited
-  #   Format documentation can be found: http://www.wwpdb.org/documentation/format33/v3.3.html
+  #   Format documentation can be found: http://www.wwpdb.org/documentation/format33/sect5.html#HELIX
   #######
-  push(@parsedData,join("",@data[0..5]));    # HELIX
-  push(@parsedData,join("",@data[7..9]));    # serNum
-  push(@parsedData,join("",@data[11..13]));  # helixID
-  push(@parsedData,join("",@data[15..17]));  # initResName
-  push(@parsedData,$data[19]);               # initChainID
-  push(@parsedData,join("",@data[21..24]));  # initSeqNum
-  push(@parsedData,$data[25]);               # initICode
-  push(@parsedData,join("",@data[27..29]));  # endResName
-  push(@parsedData,$data[31]);               # endChainID
-  push(@parsedData,join("",@data[33..36]));  # endSeqNum
-  push(@parsedData,$data[37]);               # endICode
-  push(@parsedData,join("",@data[38..39]));  # helixClass
-  push(@parsedData,join("",@data[40..69]));  # comment
-  push(@parsedData,join("",@data[71..75]));  # length
+  push(@parsedData,join("",@data[0..5]));    # [0]  "HELIX "
+  push(@parsedData,join("",@data[7..9]));    # [1]  Helix serial number 
+  push(@parsedData,join("",@data[11..13]));  # [2]  Helix identifier
+  push(@parsedData,join("",@data[15..17]));  # [3]  Initial residue name
+  push(@parsedData,$data[19]);               # [4]  Chain ID for chain containing this helix
+  push(@parsedData,join("",@data[21..24]));  # [5]  Sequence number of the initial residue
+  push(@parsedData,$data[25]);               # [6]  Insertion code of the initial residue
+  push(@parsedData,join("",@data[27..29]));  # [7]  Terminal residue name
+  push(@parsedData,$data[31]);               # [8]  Chain ID for chain containing this helix
+  push(@parsedData,join("",@data[33..36]));  # [9]  Sequence number of terminal residue
+  push(@parsedData,$data[37]);               # [10] Insertion code of terminal residue
+  push(@parsedData,join("",@data[38..39]));  # [11] Helix class
+  push(@parsedData,join("",@data[40..69]));  # [12] Comment
+  push(@parsedData,join("",@data[71..75]));  # [13] Length of helix
 
   return @parsedData;
 }
