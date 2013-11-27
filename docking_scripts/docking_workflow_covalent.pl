@@ -143,7 +143,7 @@ my $prep_gpf = join(" ",
                     "-l $ligand\.pdbqt",
                     "-r $receptor\.pdbqt",
                     "-p npts=$box,$box,$box",
-                    "-p gridcenter=$rx,$ry,$rz",
+                    "-p gridcenter=\"$rx $ry $rz\"",
                     "-p spacing=0.5",
                     "-o $rec\_$lig\_grid.gpf");
 if($verb){print "$prep_gpf\n";}
@@ -186,15 +186,10 @@ if($bound)
   print `mv tmp $rec\_$lig\_dock.dpf`;
 }
 
-=begin comment
 my $grid = "autogrid4 -p $rec\_$lig\_grid.gpf -l $rec\_$lig\_grid.glg";
-print `$grid`;
+system($grid);
 my $dock = "autodock4 -p $rec\_$lig\_dock.dpf -l $rec\_$lig\_dock.dlg";
-print `$dock`;
-=end comment
-=cut
+system($dock);
 
 warn "Done.\n";
 exit(0);
-
-#####-----Subroutines-----#####
