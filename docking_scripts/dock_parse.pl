@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # Script: dock_parse.pl
-# Description: Parse an autodock .dlg file and prints to _docking_results
+# Description: Parse an autodock .dlg file and prints free energy values (sorted) to _docking_results
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
 # Date: 11.27.13
@@ -78,8 +78,9 @@ foreach my $line (<IN>)
   }
 }
 close(IN);
-my $in = (split(/\./,$infile))[0];
-my $outstream = ">$in\_docking\_results";
+my @filename = split(/\//,$infile);
+my ($rec,$lig,$ext) = split(/\_/,$filename[2]);
+my $outstream = ">$filename[0]/$filename[1]/$rec\_$lig\_docking\_results";
 
 if($verb)
 {
@@ -88,10 +89,10 @@ if($verb)
 
 open(OUT,$outstream);
 print OUT "#$infile:\n";
-print OUT "Run\t";
+print OUT "#Run\t";
 print OUT "Free Energy\t";
 print OUT "\n";
-foreach my $key (sort {$a <=> $b} keys %runs)
+foreach my $key (sort {$runs{$a} <=> $runs{$b}} keys %runs)
 {
   print OUT "$key\t";
   print OUT "$runs{$key}\t";
