@@ -17,12 +17,14 @@ my $treefile;
 my $code_filename;
 my %hash;
 my ($help,$verb);
+my $encode;
 GetOptions ("i|input=s" => \$treefile,
             "c|code=s"  => \$code_filename,
             "h|help"    => \$help,
-            "v|verbose" => \$verb);
+            "v|verbose" => \$verb,
+            "e|encode"  => \$encode);
 
-my $usage = "Usage: dephylip_tree.pl -i treefile -c codefile\n";
+my $usage = "Usage: dephylip_tree.pl -i treefile -c codefile -e\n";
 
 die $usage if ($help);
 die $usage if (!$treefile or !$code_filename);
@@ -42,6 +44,12 @@ foreach my $line (<IN>)
 {
   chomp $line;
   my ($val,$key) = split(/\s+/,$line);
+  if($encode)
+  {
+    my $tmp = $key;
+    $key = $val;
+    $val = $tmp;
+  }
   $hash{$key} = $val;
 }
 close(IN);
