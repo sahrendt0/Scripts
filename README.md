@@ -1,4 +1,5 @@
 SeqAnalysis.pm. . . . . Perl module containing often-used subroutines for sequence processing<br>
+bio3d.R . . . . . . . . Loads Bio3D module and runs through steps to generate PCA plot<br>
 bp_sreformat.pl . . . . <br>
 bp_ssearchparse.pl. . . Parses all ssearch files in the given directory; Gathers counts and sequences.<br>
 dephylip_tree.pl. . . . Dephylips Newick tree files<br>
@@ -12,6 +13,7 @@ kegg.pl . . . . . . . . Queries the KEGG db to collect genes in a given pathway<
 mkpl.pl . . . . . . . . Sets up perl skeleton script<br>
 mkpm.pl . . . . . . . . Sets up a perl module template with comments and standard info<br>
 pf2g.pl . . . . . . . . Takes a list of pfam IDs and maps them to go terms<br>
+print_all.R . . . . . . Loads Bio3D module and plots PCA using a variety of pre-defined color schemes<br>
 process_kegg.pl . . . . Process a KEGG record file<br>
 showPool.pl . . . . . . Takes pool input and highlights residues in Pymol<br>
 spc2us.pl . . . . . . . renamer script used for replacing spaces w/ underscores in filenames<br>
