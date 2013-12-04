@@ -21,7 +21,6 @@ use warnings;
 use strict;
 use Getopt::Long;
 
-
 #####-----Global Variables-----#####
 my $input;
 my ($help,$verb);
@@ -31,6 +30,9 @@ GetOptions (\'i|input=s\' => \\$input,
             \'v|verbose\' => \\$verb);
 my $usage = "Usage: '.$input.' -i input\n";
 die $usage if $help;
+die "No input.\n$usage" if (!$input);
+
+#####-----Main-----#####
 
 warn "Done.\n";
 exit(0);
