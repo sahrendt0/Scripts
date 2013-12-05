@@ -29,7 +29,7 @@ my $seq_io = Bio::SeqIO->new(-file => "$input",
 
 while(my $seq_obj = $seq_io->next_seq)
 {
-  for my $feat ($gbk->get_SeqFeatures) 
+  for my $feat ($seq_obj->get_SeqFeatures) 
   {
     print "primary tag: ", $feat->primary_tag, "\n";
     for my $tag ($feat->get_all_tags)
