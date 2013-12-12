@@ -3,30 +3,31 @@ package SeqAnalysis;
 # Description: Perl module containing often-used subroutines for sequence processing
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
-# Date: 11.15.13
+# Date: 12.11.13
 #######################
 # Functionality includes:
-#  [x] gc content		: getGC(str dna)
-#  [x] protein mass		: getProtMass(str prot)
+#  [x] gc content               : getGC(str dna)
+#  [x] protein mass             : getProtMass(str prot)
 #  [ ] N50 
-#  [x] hamming distance		: getHammDist(str dna1, str dna2)
-#  [x] reverse complement	: getRevComp(str dna)
-#  [x] transcribe to RNA	: transcribe(str dna)
-#  [x] motif finding		: getMotifPos(str seq, str match)
-#  [x] 6 frame translation	: getSixFrame(str dna)
-#  [ ] reverse translation	: revTrans(str prot)
-#  [x] get profile from align	: getProfile(hash_ref alignment)
-#  [x] get consensus from prof	: getConsensus(hash_ref profile)
-#  [x] remove an intron		: removeIntron(str dna, str intron)
+#  [x] hamming distance         : getHammDist(str dna1, str dna2)
+#  [x] reverse complement       : getRevComp(str dna)
+#  [x] transcribe to RNA        : transcribe(str dna)
+#  [x] motif finding            : getMotifPos(str seq, str match)
+#  [x] 6 frame translation      : getSixFrame(str dna)
+#  [ ] reverse translation      : revTrans(str prot)
+#  [x] get profile from align   : getProfile(hash_ref alignment)
+#  [x] get consensus from prof  : getConsensus(hash_ref profile)
+#  [x] remove an intron         : removeIntron(str dna, str intron)
 #  [x] transition/transversion  : getTTRatio(str dna1, str dna2)
-#  [x] get sequences		: getSeqs(str fasta_filename, arrayref accnos)
+#  [x] get sequences            : getSeqs(str fasta_filename, arrayref accnos)
+#  [x] seq to hash              : seq2hash(str seq)
 ########################
 use strict;
 use warnings;
 use Bio::Perl;
 use base 'Exporter';  # to export our subroutines
 
-our @EXPORT = qw(getSeqs getTTRatio removeIntron getConsensus getProfile revTrans getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe); # export always
+our @EXPORT = qw(seq2hash getSeqs getTTRatio removeIntron getConsensus getProfile revTrans getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe); # export always
 
 our %CODONS_3 = ("MET" => ["ATG"],
                  "ILE" => ["ATA","ATC","ATT"],
@@ -513,6 +514,22 @@ sub getHammDist
   return $hamm;
 }
 
+#####
+## Subroutine: seq2hash
+#    Input: a string
+#    Returns: a hash, where keys are the bases / residues and values are counts
+########
+sub seq2hash
+{
+  my $seq = shift @_;
+  my %ret;
+  foreach my $item (split(//,$seq))
+  {
+    $ret{$item}++;
+  }
+  
+  return %ret;
+}
 
 #####
 ## Subroutine: isDNA 
@@ -523,7 +540,8 @@ sub isDNA
 {
   my $seq = shift @_;
   my $isDNA = 0;
-  
+  my %seq = seq2hash($seq);
+    
   return $isDNA;
 }
 
