@@ -24,7 +24,7 @@ GetOptions ('f|fasta=s' => \$org,
 
 my $usage = "Usage: getseqfromfile.pl -f fastafile [-d dir] -i id | -a accnos_file\n";
 die $usage if $help;
-die "No IDs provided.\n$usage" if (!$acc_file || !$seqID);
+die "No IDs provided.\n$usage" if (!$acc_file && !$seqID);
 
 my $seqio_obj_in = Bio::SeqIO->new(-file => "$dir/$org\.fasta",
                                    -format => "fasta");
