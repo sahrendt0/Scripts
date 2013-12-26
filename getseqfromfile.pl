@@ -51,7 +51,7 @@ while(my $seq = $seqio_obj_in->next_seq)
 {
   if(exists $acc{$seq->display_id})
   {
-    my $seqio_obj_out = Bio::SeqIO->new(-fh => '\*STDOUT',
+    my $seqio_obj_out = Bio::SeqIO->new(-fh => \*STDOUT,
                                         -format => "fasta");
     $seqio_obj_out->write_seq($seq);
   }
