@@ -11,7 +11,7 @@ use Bio::Seq;
 use Bio::SeqIO;
 use Getopt::Long;
 
-my ($org,$seqID);
+my ($org,$seqID,$acc_file);
 my $help = 0;
 my $dir = ".";
 my %acc;
