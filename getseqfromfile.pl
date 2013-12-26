@@ -12,15 +12,17 @@ use Bio::SeqIO;
 use Getopt::Long;
 
 my ($org,$seqID,$acc_file);
-my $help = 0;
+my ($help,$verb);
 my $dir = ".";
 my %acc;
 
-GetOptions ('f|fasta=s' => \$org,
-            'd|dir=s'   => \$dir,
+GetOptions ('f|fasta=s'  => \$org,
+            'd|dir=s'    => \$dir,
             'a|accnos=s' => \$acc_file,
-            'i|id=s' => \$seqID,
-            'h|help+'=> \$help);
+            'i|id=s'     => \$seqID,
+            'h|help'     => \$help,
+            'v|verbose'  => \$verb     # verbose for file output
+);
 
 my $usage = "Usage: getseqfromfile.pl -f fastafile [-d dir] -i id | -a accnos_file\n";
 die $usage if $help;
@@ -49,7 +51,7 @@ while(my $seq = $seqio_obj_in->next_seq)
 {
   if(exists $acc{$seq->display_id})
   {
-    my $seqio_obj_out = Bio::SeqIO->new(-fh => \*STDOUT,
+    my $seqio_obj_out = Bio::SeqIO->new(-fh => '\*STDOUT',
                                         -format => "fasta");
     $seqio_obj_out->write_seq($seq);
   }
