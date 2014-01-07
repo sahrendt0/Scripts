@@ -7,12 +7,14 @@ fasta2hmm.pl. . . . . . Pipeline for converting unaligned fasta files to hmm fil
 gbk2pep.pl. . . . . . . Parses out translated regions from a genbank file<br>
 getkegg.pl. . . . . . . Parses a keggfile and downloads the genes <br>
 getscripts.pl . . . . . Produces README.md containing all of the custom scripts in ~/scripts<br>
+getseqfromfile.pl . . . Provide a sequence ID and a fasta flatfile (database) and the script will return the fasta-formatted sequence<br>
 gimpvert.pl . . . . . . Converts gel-imager .tif images to .png files; opens in Gimp for optional editing<br>
 hmm_run.pl. . . . . . . Generates a shell script to run batch searches using either hmmsearch or hmmscan<br>
 hmmparse.pl . . . . . . Parses an HMM result file, scan or search<br>
 kegg.pl . . . . . . . . Queries the KEGG db to collect genes in a given pathway<br>
 mkpl.pl . . . . . . . . Sets up perl skeleton script<br>
 mkpm.pl . . . . . . . . Sets up a perl module template with comments and standard info<br>
+patternAnalysis.pl. . . A script to analyze patterns in the flagella (gain/loss) search<br>
 pf2g.pl . . . . . . . . Takes a list of pfam IDs and maps them to go terms<br>
 print_all.R . . . . . . Loads Bio3D module and plots PCA using a variety of pre-defined color schemes<br>
 process_kegg.pl . . . . Process a KEGG record file<br>
