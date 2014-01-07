@@ -6,14 +6,18 @@
 # Date: 01.06.2014
 ##################################
 # Patterns to use:
-#  All EDF:       Amac Bden Cang Gpro Hpol PirE [OrpC ]Rall Spun
-#    All chytrid: Bden Gpro Hpol Spun
-#    All blasto:  Amac Cang
-#    All neo:     PirE [OrpC]
-#  non-EDF:   Afum Aloc Ccin Ccor Cneo Crev Ecun Eint Ncra Rory Scer Srot Umay
-#    Dik:     Afum Ccin Cneo Ncra Rory Scer Umay
-#      Asco:  Afum Ncra Scer
-#      Basid: Ccin Cneo Rory Umay
+#  All EDF:           Aloc Amac Bden Cang Ecun Eint Gpro Hpol PirE [OrpC] Rall Spun
+#    All flagellated: Amac Bden Cang Gpro Hpol PirE [OrpC] Rall Spun
+#    All chytrid:     Bden Gpro Hpol Spun
+#    All blasto:      Amac Cang
+#    All neo:         PirE [OrpC]
+#    All Crypto:      Rall
+#    All Micro:       Aloc Ecun Eint
+#  non-EDF:           Afum Ccin Ccor Cneo Crev Ncra Rory Scer Umay
+#    Zygo:            Ccor Crev Rory
+#    Dik:             Afum Ccin Cneo Ncra Scer Umay
+#      Asco:          Afum Ncra Scer
+#      Basid:         Ccin Cneo Umay
 ###################################
 use warnings;
 use strict;
@@ -49,7 +53,7 @@ my %nonEDF = map{$_ => 1} qw(Afum Ccin Ccor Cneo Crev Ncra Rory Scer Umay); # Zy
 my %Zygo = map{$_ => 1} qw(Ccor Crev Rory);
 my %Dik = map {$_ => 1} qw(Afum Ccin Cneo Ncra Scer Umay); # Asco, Basidio
 my %Asco = map {$_ => 1} qw(Afum Ncra Scer);
-my %Basid = map {$_ => 1} qw(Ccin Cneo Rory Umay);
+my %Basid = map {$_ => 1} qw(Ccin Cneo Umay);
 my %Out = map {$_ => 1} qw(Srot);
 
 GetOptions ('i|input=s' => \$infile,
@@ -95,59 +99,61 @@ foreach my $input (sort @infiles)
   #  print $line,"\n";
     
     my %org = map {$_ => 1} split(/,/,$pattern);
-    $gene_pattern{$gene}{'Hits'} = \%org; 
+    $org{$current_org} = 1;
+    $gene_pattern{$current_org}{$gene}{'Hits'} = \%org; 
     foreach my $hit (sort keys %org)
     {
-      $gene_pattern{$gene}{'Stats'}{'Total_hits'}++;
-      $gene_pattern{$gene}{'Stats'}{'EDF_hits'}++ if(exists $EDF{$hit});
-      $gene_pattern{$gene}{'Stats'}{'Flag_hits'}++ if(exists $EDF_flag{$hit});
-      $gene_pattern{$gene}{'Stats'}{'Chytrid_hits'}++ if(exists $Chytrid{$hit});
-      $gene_pattern{$gene}{'Stats'}{'Blasto_hits'}++ if(exists $Blasto{$hit});
-      $gene_pattern{$gene}{'Stats'}{'Neo_hits'}++ if(exists $Neo{$hit});
-      $gene_pattern{$gene}{'Stats'}{'Micro_hits'}++ if(exists $Micro{$hit});
-      $gene_pattern{$gene}{'Stats'}{'Crypto_hits'}++ if(exists $Crypto{$hit});
-      $gene_pattern{$gene}{'Stats'}{'nonEDF_hits'}++ if(exists $nonEDF{$hit});
-      $gene_pattern{$gene}{'Stats'}{'Zygo_hits'}++ if(exists $Zygo{$hit});
-      $gene_pattern{$gene}{'Stats'}{'Dikarya_hits'}++ if(exists $Dik{$hit});
-      $gene_pattern{$gene}{'Stats'}{'Asco_hits'}++ if(exists $Asco{$hit});
-      $gene_pattern{$gene}{'Stats'}{'Basidio_hits'}++ if(exists $Basid{$hit});
-      $gene_pattern{$gene}{'Stats'}{'OG_hits'}++ if(exists $Out{$hit});
+      $gene_pattern{$current_org}{$gene}{'Stats'}{'Total_hits'}++;
+      $gene_pattern{$current_org}{$gene}{'Stats'}{'EDF_hits'}++ if(exists $EDF{$hit});
+      $gene_pattern{$current_org}{$gene}{'Stats'}{'Flag_hits'}++ if(exists $EDF_flag{$hit});
+      $gene_pattern{$current_org}{$gene}{'Stats'}{'Chytrid_hits'}++ if(exists $Chytrid{$hit});
+      $gene_pattern{$current_org}{$gene}{'Stats'}{'Blasto_hits'}++ if(exists $Blasto{$hit});
+      $gene_pattern{$current_org}{$gene}{'Stats'}{'Neo_hits'}++ if(exists $Neo{$hit});
+      $gene_pattern{$current_org}{$gene}{'Stats'}{'Micro_hits'}++ if(exists $Micro{$hit});
+      $gene_pattern{$current_org}{$gene}{'Stats'}{'Crypto_hits'}++ if(exists $Crypto{$hit});
+      $gene_pattern{$current_org}{$gene}{'Stats'}{'nonEDF_hits'}++ if(exists $nonEDF{$hit});
+      $gene_pattern{$current_org}{$gene}{'Stats'}{'Zygo_hits'}++ if(exists $Zygo{$hit});
+      $gene_pattern{$current_org}{$gene}{'Stats'}{'Dikarya_hits'}++ if(exists $Dik{$hit});
+      $gene_pattern{$current_org}{$gene}{'Stats'}{'Asco_hits'}++ if(exists $Asco{$hit});
+      $gene_pattern{$current_org}{$gene}{'Stats'}{'Basidio_hits'}++ if(exists $Basid{$hit});
+      $gene_pattern{$current_org}{$gene}{'Stats'}{'OG_hits'}++ if(exists $Out{$hit});
     }
   
     ## Copy the EDF-exclusive genes
-    if ($gene_pattern{$gene}{'Stats'}{'EDF_hits'})
+    if ($gene_pattern{$current_org}{$gene}{'Stats'}{'EDF_hits'})
     {
-      if($gene_pattern{$gene}{'Stats'}{'EDF_hits'} == $gene_pattern{$gene}{'Stats'}{'Total_hits'})
+      if($gene_pattern{$current_org}{$gene}{'Stats'}{'EDF_hits'} == $gene_pattern{$current_org}{$gene}{'Stats'}{'Total_hits'})
       {
-        $only_EDF{$gene} = $gene_pattern{$gene};
+        $only_EDF{$current_org}{$gene} = $gene_pattern{$current_org}{$gene};
       }
     }
   
     ## Copy the Flagellated-exclusive genes
-    if ($gene_pattern{$gene}{'Stats'}{'Flag_hits'})
+    if ($gene_pattern{$current_org}{$gene}{'Stats'}{'Flag_hits'})
     {
-      if($gene_pattern{$gene}{'Stats'}{'Flag_hits'} == $gene_pattern{$gene}{'Stats'}{'Total_hits'})
+      if($gene_pattern{$current_org}{$gene}{'Stats'}{'Flag_hits'} == $gene_pattern{$current_org}{$gene}{'Stats'}{'Total_hits'})
       {
-        $only_flag{$gene} = $gene_pattern{$gene};
+        $only_flag{$current_org}{$gene} = $gene_pattern{$current_org}{$gene};
       }
     }
   
     ## Copy the flagellated but non-dikarya genes
-    if($gene_pattern{$gene}{'Stats'}{'Flag_hits'})
+    if($gene_pattern{$current_org}{$gene}{'Stats'}{'Flag_hits'})
     {
-      $no_dikarya{$gene} = $gene_pattern{$gene} if(!($gene_pattern{$gene}{'Stats'}{'Dikarya_hits'}) && ($gene_pattern{$gene}{'Stats'}{'Flag_hits'} >= ($total_flag*$thresh)));
+      $no_dikarya{$current_org}{$gene} = $gene_pattern{$current_org}{$gene} if(!($gene_pattern{$current_org}{$gene}{'Stats'}{'Dikarya_hits'}) && ($gene_pattern{$current_org}{$gene}{'Stats'}{'Flag_hits'} >= ($total_flag*$thresh)));
     }
 
     ## Copy the Chytridio but not Blasto
-    if($gene_pattern{$gene}{'Stats'}{'Chytrid_hits'})
+    if($gene_pattern{$current_org}{$gene}{'Stats'}{'Chytrid_hits'})
     {
-      $Chy_no_Blasto{$gene} = $gene_pattern{$gene} if(!($gene_pattern{$gene}{'Stats'}{'Blasto_hits'}) && ($gene_pattern{$gene}{'Stats'}{'Chytrid_hits'} >= 3)); # there are only 4 chytridiomycota, so this is an "all-but-one" deal
+      $Chy_no_Blasto{$current_org}{$gene} = $gene_pattern{$current_org}{$gene} if(!($gene_pattern{$current_org}{$gene}{'Stats'}{'Blasto_hits'}) && ($gene_pattern{$current_org}{$gene}{'Stats'}{'Chytrid_hits'} >= 3)); # there are only 4 chytridiomycota, so this is an "all-but-one" deal
     }
   }
   close(IN);
   
   
 #####-----Output-----#####
+  #print Dumper \%gene_pattern;
   #print Dumper \%only_flag;
   #print Dumper \%no_dikarya;
   
@@ -166,12 +172,12 @@ exit(0);
 sub writeOut
 {
   my $org = shift @_;
-  my @IDs = keys %{shift @_};
+  my %patterns = %{shift @_};
   my $fName = shift @_;
   my $seq_out = Bio::SeqIO->new(-file => ">$org.$fName.fasta",
                                 -format => "fasta");
 
-  foreach my $key (sort @IDs)
+  foreach my $key (sort keys %{$patterns{$org}})
   {
     $seq_out->write_seq($proteome{$key});
   }
