@@ -3,6 +3,7 @@ bio3d.R . . . . . . . . Loads Bio3D module and runs through steps to generate PC
 bp_sreformat.pl . . . . <br>
 bp_ssearchparse.pl. . . Parses all ssearch files in the given directory; Gathers counts and sequences.<br>
 dephylip_tree.pl. . . . Dephylips Newick tree files<br>
+fasta2go.pl . . . . . . Joins geneIDs to GO terms using previously established DBs <br>
 fasta2hmm.pl. . . . . . Pipeline for converting unaligned fasta files to hmm files<br>
 gbk2pep.pl. . . . . . . Parses out translated regions from a genbank file<br>
 getkegg.pl. . . . . . . Parses a keggfile and downloads the genes <br>
