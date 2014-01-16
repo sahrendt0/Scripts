@@ -4,15 +4,23 @@
 use warnings;
 use strict;
 use Time::Piece;
+use Getopt::Long;
 
 my $date = Time::Piece->new->strftime('%m.%d.%Y');
+my $input;
+my $desc = "";
 
-my $input = shift;
+GetOptions ('i|input=s' => \$input,
+            'd|description=s' => \$desc);
 
-open(OUT,'>',$input) or die "Can't open $input\n";
+my $usage = "Usage: mkpl.pl -i input [-d desc]\n";
+die "No input.\n$usage" if (!$input);
+
+
+open(OUT,'>',$input);
 print OUT '#!/usr/bin/perl
-# Script '.$input.'
-# Description: 
+# Script: '.$input.'
+# Description: '.$desc.' 
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
 # Date: '.$date.'
