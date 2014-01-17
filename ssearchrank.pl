@@ -3,7 +3,7 @@
 # Description: Searches many FASTA search result files to get a better scoring match for a particular transcript
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
-# Date: 11.18.2013
+# Date: 12.7.2013
 ##################################
 # Usage: ssearchrank.pl -i score_file
 #################################
@@ -15,7 +15,7 @@
 #   - store it in the hash
 # Then for each transcript
 #   - sort all hits across all different species
-#   - only report the top hit IF it didn't come from Piromyces
+#   - only report the top hit IF it didn't come from Piromyces *OR* Orpinomyces
 ###################################
 
 use warnings;
@@ -110,7 +110,7 @@ foreach my $gene (keys %ssearch)
 # Print out the flattened hash, sorted by the scores
 # Basically, for each transcript, want to see what the best hit is across all ssearch results files
 ##
-# Filter out things that hit Piromyces
+# Filter out things that hit Piromyces or Orpinomyces
 # This way, we can see if poorly scoring Neocallo hits were just called incorrectly
 open(RE,">rescored");
 print RE "Gene\tHit Org\tTop hit\tScore\tOld Score\n";
@@ -118,6 +118,7 @@ foreach my $gene (sort keys %flat_hash)
 {
   my @keys = sort { $flat_hash{$gene}{$a} <=> $flat_hash{$gene}{$b} } keys %{$flat_hash{$gene}};
   next if ($keys[0] =~ /PirE/i);
+  next if ($keys[0] =~ /OrpC/i);
   print RE "$gene\t";
   print RE "$keys[0]\t";
   print RE $flat_hash{$gene}{$keys[0]},"\t";
