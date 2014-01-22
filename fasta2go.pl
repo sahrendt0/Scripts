@@ -128,6 +128,9 @@ foreach my $input (@infiles)
     while(my $seq_obj = $fasta_in->next_seq)
     {
       my $t_id = $seq_obj->display_id;
+      $t_id = (split(/\|/,$t_id))[1] if($t_id =~ /\|/);
+      $t_id =~ s/(.{3})T/$1G/ if($t_id =~ /.{3}T\_.+/);
+      $t_id =~ s/T\d$//;
       print OUT "$t_id\t";
       print OUT join(",",sort keys %{$GOhash{$t_id}}),"\n";
     }
@@ -140,6 +143,8 @@ foreach my $input (@infiles)
     print "Not writing $input.gene2go\n";
   }
 }
+
+foreach my $key (sort keys %GOhash){  print $key if ($key =~ /T0/);}
 
 warn "Done.\n";
 exit(0);
