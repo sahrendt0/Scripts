@@ -24,7 +24,7 @@ GetOptions ('f|fasta=s'  => \$org,
             'v|verbose'  => \$verb     # verbose for file output
 );
 
-my $usage = "Usage: getseqfromfile.pl -f fastafile [-d dir] -i id | -a accnos_file\n";
+my $usage = "Usage: getseqfromfile.pl -f fastafile [-d dir] -i id | -a accnos_file\nOutput is STDOUT\n";
 die $usage if $help;
 die "No IDs provided.\n$usage" if (!$acc_file && !$seqID);
 
