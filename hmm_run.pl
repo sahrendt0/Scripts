@@ -25,7 +25,7 @@ my $incE = 0;
 my $abbr = "";
 my $prog = "";
 my $help = 0;
-my $fastafile;
+my ($fastafile,@fasta_files);
 GetOptions ('i|input=s'   => \$hmmfile, 
             'f|fasta=s'   => \$fastafile,
             'd|dir=s'     => \$dir,
@@ -44,7 +44,7 @@ die "Invalid hmm profile: $hmmfile\n$usage" if ($hmmfile eq "");
 ## Create the shell script
 #print $hmmfile,"\n";
 open(OUT,">","$abbr\_$prog.sh");
-if(#read whole dir)
+if(!$fastafile)
 {
   opendir(DIR,$dir);
   @fasta_files = grep {/\.fasta$/} readdir(DIR);
@@ -52,6 +52,7 @@ if(#read whole dir)
 }
 else
 {
+  $dir = "";
   push @fasta_files,$fastafile;
 }
 print OUT "cd ",cwd(),"\n";  
