@@ -31,19 +31,24 @@ my $seq_io = Bio::SeqIO->new(-file => "$input",
                              -format => "genbank");
 my $prot_out = Bio::SeqIO->new(-file => ">>$output\_proteins.aa.fasta",
                                -format => "fasta");
+my $num = 0;
+open(NO_CDS,">no_cds");
+open(MULT_CDS,">mult_cds");
 while(my $seq_obj = $seq_io->next_seq)
 {
   my $locus = $seq_obj->display_id;
-  if($locus !~ /^Orpinomyces\_(\d+)\.\1$/)
-  {
-    print $locus,": ";
-    print "\n";
-  }
-  my $seq_obj_out = Bio::Seq->new(-alphabet => "protein");
+  my $has_CDS=0;
   for my $feat ($seq_obj->get_SeqFeatures) 
   {
     if($feat->primary_tag eq "CDS")
     {
+      $has_CDS++;
+      if($has_CDS > 1)
+      {
+        warn "Multiple CDS at $locus\n";
+        print MULT_CDS $locus,"\n";
+      }
+      my $seq_obj_out = Bio::Seq->new(-alphabet => "protein");
       #print "primary tag: ", $feat->primary_tag, "\n";
       for my $tag ($feat->get_all_tags)
       {
@@ -67,11 +72,19 @@ while(my $seq_obj = $seq_io->next_seq)
           }
         }
       }
-    }
+      $prot_out->write_seq($seq_obj_out);
+    } # if CDS
   } # foreach feature
-  $prot_out->write_seq($seq_obj_out);
+  if(!$has_CDS)
+  {
+    warn "No CDS for $locus\n";
+    print NO_CDS $locus,"\n";
+  }
+ $num++;
 } # while seq_obj
-
+close(NO_CDS);
+close(MULT_CDS);
+warn "$num\n";
 warn "Done.\n";
 exit(0);
 

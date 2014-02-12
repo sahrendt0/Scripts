@@ -27,7 +27,7 @@ my @genelist;    # list of gene IDs in $genes_file
 
 ## Command line options
 my $ssearch_dir = ".";   # directory of ssearch results
-my $taxonlist_file = "$gen_dir/taxonlist_mod";
+my $taxonlist_file = "$gen_dir/taxonlist";
 my $genes_file; # Fasta file containing gene(s) used in ssearch
 my @total_orgs; # organisms queried
 my $verbose;
@@ -52,8 +52,8 @@ opendir(DIR,$ssearch_dir);
 closedir(DIR);
 if(scalar @result_list == 0)
 {
-  print "Can't find any .ssearch files in directory \"$ssearch_dir\"\n";
-  print "Try a different directory...\n";
+  warn "Can't find any .ssearch files in directory \"$ssearch_dir\"\n";
+  warn "Try a different directory...\n";
   exit;
 }
 
@@ -97,10 +97,9 @@ foreach my $line (<TX>)
   $taxa{$ID} = \@info;
 #  print "<$ID><$type><$name>\n";
 }
-foreach my $key (keys %taxa){  print "$key = ",$taxa{$key}[0],"\n"}
+#foreach my $key (keys %taxa){  print "$key = ",$taxa{$key}[0],"\n"}
 close(TX);
 
-__END__
 ############
 ## 3. Array of genes + counts
 ############

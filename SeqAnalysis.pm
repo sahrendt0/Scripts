@@ -3,7 +3,7 @@ package SeqAnalysis;
 # Description: Perl module containing often-used subroutines for sequence processing
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
-# Date: 12.11.13
+# Date: 1.31.14
 #######################
 # Functionality includes:
 #  [x] gc content               : getGC(str dna)
@@ -21,13 +21,14 @@ package SeqAnalysis;
 #  [x] transition/transversion  : getTTRatio(str dna1, str dna2)
 #  [x] get sequences            : getSeqs(str fasta_filename, arrayref accnos)
 #  [x] seq to hash              : seq2hash(str seq)
+#  [x] hmmscan/search parse     : hmmParse(str filename)
 ########################
 use strict;
 use warnings;
 use Bio::Perl;
 use base 'Exporter';  # to export our subroutines
 
-our @EXPORT = qw(seq2hash getSeqs getTTRatio removeIntron getConsensus getProfile revTrans getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe); # export always
+our @EXPORT = qw(seq2hash getSeqs getTTRatio removeIntron getConsensus getProfile revTrans getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe hmmParse); # export always
 
 our %CODONS_3 = ("MET" => ["ATG"],
                  "ILE" => ["ATA","ATC","ATT"],
@@ -160,7 +161,57 @@ our %AA = ("ATG" => "M",
            "TAG" => "*");
 
 #####
-## Subroutine:
+## Subroutine: hmmParse
+#    Input: filename
+#    Returns: hash of counts
+#######
+sub hmmParse
+{
+  my $hmmfile = shift @_;
+  my %hits;
+
+  my (@seqs,%genes,$gene,$PFAM);
+#  my ($type,$tmp,$org,$mod,$ext);
+#  my @flags; # flags for positions of gene, PFAM, type, org
+  my @filename = split(/[\-|\.|\_]/,$hmmfile);
+#  $tmp = $filename[1]; # "vs"
+#  $mod = $filename[3]; # "tbl"
+  my $ext = $filename[-1];
+#  if($ext =~ m/scan/)
+#  {
+#    @flags = (1,0,2,0);
+#  }
+#  if($ext =~ m/search/)
+#  {
+#    @flags = (0,1,0,2);
+#  }
+#  $type = $filename[$flags[2]];
+#  $all_types{$type}++;
+#  $org = $filename[$flags[3]];
+
+  open(HMM, "<$hmmfile") || die "Can't open file \"$hmmfile\".\n";
+  foreach my $line (<HMM>)
+  {
+    chomp $line;
+    next if($line =~ m/^#/);
+    my ($t_name,$t_acc,$q_name,$q_acc,$full_eval,$full_score,$full_bias,$best_eval,$best_score,$best_bias,$dom_exp,$dom_reg,$dom_clu,$dom_ov,$dom_env,$dom_dom,$dom_rep,$dom_inc,@desc) = split(/\s+/,$line);
+    if($ext =~ /scan/)
+    {
+      $gene = $q_name;
+      $PFAM = join(";", (split(/\./,$t_acc))[0], $t_name);
+    }
+    if($ext =~ /search/)
+    {
+      $gene = $t_name;
+      $PFAM = join(";",(split(/\./,$q_acc))[0],$q_name);
+    }
+    $hits{$PFAM}++;
+  }
+  return %hits;
+}
+
+#####
+## Subroutine: getSeqs
 #    Input: Sequence hash, accnos array
 #    Returns: none; write out to file
 #######
