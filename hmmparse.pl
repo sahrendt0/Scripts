@@ -34,7 +34,7 @@ GetOptions ('v|verbose+'  => \$verbose,
             's|sequences' => \$sequences,
             'i|input=s'   => \$input,
             'h|help'     => \$help);
-my $usage = "Usage: perl hmmparse.pl [-v] -a [-i input]\nIf -a argument is used, no need for filename\n";
+my $usage = "Usage: perl hmmparse.pl [-v] -a [-i input]\nIf -a argument is used, no need for filename\nOutput to file: \"out_table\"\n";
 die $usage if ($help);
 die $usage if (!$input and !$all);
 
@@ -141,7 +141,7 @@ foreach my $o (sort keys %hits)
                                      -format => 'fasta');
       foreach my $g (keys %{$hits{$o}{$t}})
       {
-        $outfasta->write_seq($peps{$o}{$g});
+        if(exists $peps{$o}{$g}){$outfasta->write_seq($peps{$o}{$g});}
         if($verbose>1){print "$g=>$hits{$o}{$t}{$g} ";}
       }
     }
