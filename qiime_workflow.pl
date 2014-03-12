@@ -30,7 +30,7 @@ for(my $r=1;$r<=$REGS;$r++)
   print $sh "rename 's/seqs/reg$r\_seqs/' reg$r\_otus/seqs*\n";
   print $sh "pick_rep_set.py -i reg$r\_otus/reg$r\_seqs_otus.txt -f ./reg$r\_split_libraries/seqs.fna -l reg$r\_otus/reg$r\_seqs_rep_set.log -o reg$r\_otus/reg$r\_seqs_rep_set.fasta\n";
   print $sh "align_seqs.py -i reg$r\_seqs_rep_set.fasta -m muscle -o reg$r\_otus/muscle_alignment/\n";
-  print $sh "ln -s /srv/projects/db/QIIME/UNITE_2014-02-09/sh_refs_qiime_ver6_99_09.02.2014.fasta ./reg3_otus/UNITE_ver6_99_09_02_2014.fna\n";
+  print $sh "ln -s /srv/projects/db/QIIME/UNITE_2014-02-09/sh_refs_qiime_ver6_99_09.02.2014.fasta ./reg$r\_otus/UNITE_ver6_99_09_02_2014.fna\n";
   print $sh "ln -s $PWD/UNITE_ver6_99_09_02_2014.txt ./reg$r\_otus/UNITE_ver6_99_09_02_2014.txt\n";
   print $sh "assign_taxonomy.py -i reg$r\_otus/reg$r\_seqs_rep_set.fasta -r reg$r\_otus/UNITE_ver6_99_09_02_2014.fna -t reg$r\_otus/UNITE_ver6_99_09_02_2014.txt -o reg$r\_otus/UNITE_taxonomy --rdp_max_memory 12000\n";
   print $sh "filter_alignment.py -i reg$r\_otus/muscle_alignment/reg$r\_seqs_rep_set_aligned.fasta -o reg$r\_otus/muscle_alignment_filtered --suppress_lane_mask_filter\n";
