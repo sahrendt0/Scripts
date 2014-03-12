@@ -144,27 +144,27 @@ foreach my $result_file (@result_list)
 ## 4. Display output in table format
 ###############
 open(OUT,">out_table");
-if($verbose){print OUT "Type ";}
-print OUT "Org ";
+if($verbose){print OUT "Type\t";}
+print OUT "Org\t";
 foreach my $gene (@genelist)
 {
   #my($src,$org,$ID,$code) = split(/\|/,$gene);
   #print OUT "$ID ";
-  print OUT "$gene ";
+  print OUT "$gene\t";
 }
 print OUT "\n";
 #my $fasta_out = Bio::SeqIO->new(-file => ">>outfile",
 #                                -format => "fasta");
 foreach my $key (sort @total_orgs)#keys %taxa)
 {
-  if($verbose){print "$taxa{$key}[0] ";}
-  print OUT "$key "; # This prints out Org ID; can also print out full organism name
+  if($verbose){print "$taxa{$key}[0]\t";}
+  print OUT "$key\t"; # This prints out Org ID; can also print out full organism name
   foreach my $gene (@genelist)
   {
     #print "$key $taxa{$key}[0] $taxa{$key}[1] ";
     if (exists $taxa{$key}[2]{$gene})
     {
-      print OUT "$taxa{$key}[2]{$gene} ";
+      print OUT "$taxa{$key}[2]{$gene}\t";
       my $fasout = Bio::SeqIO->new(-file => ">$abbrev\_$key.faa",
                                    -format => "fasta");
       my %uq_genes; # unique hits to be printed
@@ -180,7 +180,7 @@ foreach my $key (sort @total_orgs)#keys %taxa)
     }
     else
     {
-      print OUT "0 ";
+      print OUT "0\t";
     }
   }
   print OUT "\n";
