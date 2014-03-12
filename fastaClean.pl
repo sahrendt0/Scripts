@@ -33,18 +33,22 @@ my $seq_out = Bio::SeqIO->new(-file => ">$input\.clean",
                               -format => "fasta");
 while(my $seq_obj = $seq_in->next_seq)
 {
-#  print $seq_obj->display_id,"\n";
+  #print $seq_obj->display_id," => ";
   my @old_id = split(/\|/,$seq_obj->display_id);
-  my $tmp = join("_",$org,$old_id[1]);
-  my $new_id = join("|",$old_id[0],$tmp);
-  $seqs{$old_id[1]} = Bio::Seq->new(-display_id => $new_id,
-                                 -seq => $seq_obj->seq);
+  my $tmp = $old_id[1];
+  my $num = (split(/\./,$tmp))[1];
+  #$tmp =~ s/\s+$//;
+  #$old_id[1] =~ s/\_1//;
+  my $ni = join("",uc($org),$num);
+  my $new_id = join("|",$org,$ni);
+  #print $new_id;
+  #print "\n";
+  $seqs{$new_id} = Bio::Seq->new(-display_id => $new_id,
+                                    -seq => $seq_obj->seq);
 }
 
-foreach my $id (sort {$a <=>$b} keys %seqs)
-{
-  $seq_out->write_seq($seqs{$id});
-}
+foreach my $id (sort {$a cmp $b} keys %seqs){  $seq_out->write_seq($seqs{$id});}
+
 warn "Done.\n";
 exit(0);
 
