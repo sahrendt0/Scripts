@@ -22,13 +22,14 @@ package SeqAnalysis;
 #  [x] get sequences            : getSeqs(str fasta_filename, arrayref accnos)
 #  [x] seq to hash              : seq2hash(str seq)
 #  [x] hmmscan/search parse     : hmmParse(str filename)
+#  [ ] get taxonomy for species : getTaxonomy(str genus_species)
 ########################
 use strict;
 use warnings;
 use Bio::Perl;
 use base 'Exporter';  # to export our subroutines
 
-our @EXPORT = qw(seq2hash getSeqs getTTRatio removeIntron getConsensus getProfile revTrans getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe hmmParse); # export always
+our @EXPORT = qw(seq2hash getSeqs getTTRatio removeIntron getConsensus getProfile revTrans getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe hmmParse getTaxonomy); # export always
 
 our %CODONS_3 = ("MET" => ["ATG"],
                  "ILE" => ["ATA","ATC","ATT"],
@@ -159,6 +160,18 @@ our %AA = ("ATG" => "M",
            "TGA" => "*",
            "TAA" => "*",
            "TAG" => "*");
+#####
+## Subroutine: getTaxonomy
+#    Input: genus/species name
+#    Returns: hash of taxonomy names
+#######
+sub getTaxonomy
+{
+  my $species = shift @_;
+  my %tax_hash;
+
+  return %tax_hash;
+}
 
 #####
 ## Subroutine: hmmParse
