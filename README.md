@@ -1,3 +1,4 @@
+FM_ZygoAnalysis.pl. . . Specific script for analysis of Zygomycete run <br>
 IPR_reorder.pl. . . . . Used in MG_HMM workflow <br>
 SeqAnalysis.pm. . . . . Perl module containing often-used subroutines for sequence processing<br>
 bio3d.R . . . . . . . . Loads Bio3D module and runs through steps to generate PCA plot<br>
