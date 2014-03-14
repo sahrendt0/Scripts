@@ -7,8 +7,11 @@
 ##################################
 use warnings;
 use strict;
+use Bio::Seq;
+use Bio::SeqIO;
+use SeqAnalysis;
 use Getopt::Long;
-
+use Data::Dumper;
 #####-----Global Variables-----#####
 my $input;
 my ($help,$verb);
@@ -21,7 +24,9 @@ die $usage if $help;
 die "No input.\n$usage" if (!$input);
 
 #####-----Main-----#####
+my $hash_ref = getTaxonomy($input);
 
+print Dumper $hash_ref;
 warn "Done.\n";
 exit(0);
 

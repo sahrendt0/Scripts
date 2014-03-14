@@ -27,6 +27,9 @@ package SeqAnalysis;
 use strict;
 use warnings;
 use Bio::Perl;
+use Bio::Seq;
+use Bio::SeqIO;
+use Bio::Taxon;
 use base 'Exporter';  # to export our subroutines
 
 our @EXPORT = qw(seq2hash getSeqs getTTRatio removeIntron getConsensus getProfile revTrans getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe hmmParse getTaxonomy); # export always
@@ -169,8 +172,11 @@ sub getTaxonomy
 {
   my $species = shift @_;
   my %tax_hash;
+  my $NCBI_TAX = Bio::DB::Taxonomy->new(-source => 'entrez');
+  my $taxonid = $NCBI_TAX->get_taxonid($species);
 
-  return %tax_hash;
+  $tax_hash{$species} = $taxonid;
+  return \%tax_hash;
 }
 
 #####
