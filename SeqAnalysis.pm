@@ -30,6 +30,7 @@ use Bio::Perl;
 use Bio::Seq;
 use Bio::SeqIO;
 use Bio::Taxon;
+use Bio::DB::EUtilities;
 use base 'Exporter';  # to export our subroutines
 
 our @EXPORT = qw(seq2hash getSeqs getTTRatio removeIntron getConsensus getProfile revTrans getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe hmmParse getTaxonomy); # export always
@@ -165,17 +166,35 @@ our %AA = ("ATG" => "M",
            "TAG" => "*");
 #####
 ## Subroutine: getTaxonomy
-#    Input: genus/species name
+#    Input: species name
 #    Returns: hash of taxonomy names
 #######
 sub getTaxonomy
 {
   my $species = shift @_;
   my %tax_hash;
+ # my $nodesfile = "/rhome/sahrendt/bigdata/Data/Taxonomy/nodes.dmp";
+ # my $namesfile = "/rhome/sahrendt/bigdata/Data/Taxonomy/names.dmp";
+ # my $NCBI_TAX = Bio::DB::Taxonomy->new(-source => 'flatfile',
+ #                                       -namesfile => $namesfile,
+ #                                       -nodesfile => $nodesfile);
+  
   my $NCBI_TAX = Bio::DB::Taxonomy->new(-source => 'entrez');
   my $taxonid = $NCBI_TAX->get_taxonid($species);
-
-  $tax_hash{$species} = $taxonid;
+  my $tree = $NCBI_TAX->get_tree($species);
+  my $root = $tree->get_root_node;
+  my $curr_node = $root;
+  while(my @nodes = $curr_node->each_Descendent)
+  {
+    $curr_node = $nodes[0];
+    my $id = $curr_node->id;
+    my $rank = $curr_node->rank;
+    my $factory = Bio::DB::EUtilities->new(-eutil => 'esummary',
+                                           -db    => 'taxonomy',
+                                           -id    => $id );
+    my ($name) = $factory->next_DocSum->get_contents_by_name("ScientificName");
+    $tax_hash{$rank} = $name;
+  }
   return \%tax_hash;
 }
 
