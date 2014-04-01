@@ -24,7 +24,7 @@ GetOptions ("i|input=s" => \$treefile,
             "v|verbose" => \$verb,
             "e|encode"  => \$encode);
 
-my $usage = "Usage: dephylip_tree.pl -i treefile -c codefile [-e]\n Use -e to encode\n";
+my $usage = "Usage: dephylip_tree.pl -i treefile -c codefile [-e]\n Use -e to encode\n Output to files\n";
 
 die $usage if ($help);
 die $usage if (!$treefile or !$code_filename);
