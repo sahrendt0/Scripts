@@ -23,12 +23,14 @@ use Data::Dumper;
 my $input;
 my ($help,$verb);
 my $hash_ref;
+my $db_form = "entrez";
 my @ranks = qw(Kingdom Phylum Class Order Family Genus Species); # Standard 7 taxonomic rankings
 
 GetOptions ('i|input=s' => \$input,
+            'd|db=s' => \$db_form,
             'h|help'   => \$help,
             'v|verbose' => \$verb);
-my $usage = "Usage: fasta2taxonomy.pk -i input\n";
+my $usage = "Usage: fasta2taxonomy.pk -i input [-d 'flatfile']\nOutput to STDOUT\n";
 die $usage if $help;
 die "No input.\n$usage" if (!$input);
 
@@ -37,7 +39,7 @@ open(IN,"<$input") or die "Can't open $input: $!\n";
 while(my $name = <IN>)
 {
   chomp $name;
-  $hash_ref->{$name} = getTaxonomy($name);
+  $hash_ref->{$name} = getTaxonomy($name,$db_form);
   #print $name,"\t";
 }
 printTaxonomy($hash_ref);

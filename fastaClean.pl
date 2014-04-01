@@ -16,11 +16,12 @@ my $input;
 my $org;
 my %seqs;
 my ($help,$verb);
-
+my $replace; # force overwrite
 GetOptions ('i|input=s' => \$input,
             'o|org=s'   => \$org,
             'h|help'   => \$help,
-            'v|verbose' => \$verb);
+            'v|verbose' => \$verb,
+            'r|replace' => \$replace);
 my $usage = "Usage: fastaClean.pl -i input -o orgAbbr\n";
 die $usage if $help;
 die "No input.\n$usage" if (!$input);
@@ -36,10 +37,11 @@ while(my $seq_obj = $seq_in->next_seq)
   #print $seq_obj->display_id," => ";
   my @old_id = split(/\|/,$seq_obj->display_id);
   my $tmp = $old_id[1];
-  my $num = (split(/\./,$tmp))[1];
+  #my $num = (split(/\./,$tmp))[1];
+  my $num = $old_id[2];
   #$tmp =~ s/\s+$//;
   #$old_id[1] =~ s/\_1//;
-  my $ni = join("",uc($org),$num);
+  my $ni = join("_",$tmp,$num);
   my $new_id = join("|",$org,$ni);
   #print $new_id;
   #print "\n";
@@ -48,7 +50,7 @@ while(my $seq_obj = $seq_in->next_seq)
 }
 
 foreach my $id (sort {$a cmp $b} keys %seqs){  $seq_out->write_seq($seqs{$id});}
-
+print `mv $input\.clean $input` if ($replace);
 warn "Done.\n";
 exit(0);
 
