@@ -41,7 +41,7 @@ sub indexTaxonomy
 #######
 ## Subroutine: indexProteomes
 #  Input: none
-#  Returns: a hash with display ID keys storint sequence strings
+#  Returns: a hash with display ID keys storing sequence strings
 ##############
 sub indexProteomes
 {

@@ -23,6 +23,7 @@ package SeqAnalysis;
 #  [x] seq to hash              : seq2hash(str seq)
 #  [x] hmmscan/search parse     : hmmParse(str filename)
 #  [ ] get taxonomy for species : getTaxonomy(str genus_species)
+#  [x] index fastafile          : indexFasta(str filename)
 ########################
 use strict;
 use warnings;
@@ -33,7 +34,7 @@ use Bio::Taxon;
 use Bio::DB::EUtilities;
 use base 'Exporter';  # to export our subroutines
 
-our @EXPORT = qw(seq2hash getSeqs getTTRatio removeIntron getConsensus getProfile revTrans getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe hmmParse getTaxonomy); # export always
+our @EXPORT = qw(seq2hash getSeqs getTTRatio removeIntron getConsensus getProfile revTrans getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe hmmParse getTaxonomy indexFasta); # export always
 
 our %CODONS_3 = ("MET" => ["ATG"],
                  "ILE" => ["ATA","ATC","ATT"],
@@ -164,38 +165,78 @@ our %AA = ("ATG" => "M",
            "TGA" => "*",
            "TAA" => "*",
            "TAG" => "*");
+
+#####
+## Subroutine: indexFasta
+#    Input: fasta filename (string)
+#    Returns: hash of fasta file
+#######
+sub indexFasta
+{
+  my $fastafile = shift @_;
+  my $obj = Bio::SeqIO->new(-file => $fastafile,
+                            -format => "fasta");
+  my %hash;
+  while (my $seq = $obj->next_seq)
+  {
+    $hash{$seq->display_id} = $seq;
+  }
+  return %hash;
+}
+
 #####
 ## Subroutine: getTaxonomy
-#    Input: species name
+#    Input: species name (string)
+#           mode of taxonomy db (string; "entrez" or "flatfile")
 #    Returns: hash of taxonomy names
 #######
 sub getTaxonomy
 {
   my $species = shift @_;
+  my $mode = shift @_;
   my %tax_hash;
- # my $nodesfile = "/rhome/sahrendt/bigdata/Data/Taxonomy/nodes.dmp";
- # my $namesfile = "/rhome/sahrendt/bigdata/Data/Taxonomy/names.dmp";
- # my $NCBI_TAX = Bio::DB::Taxonomy->new(-source => 'flatfile',
- #                                       -namesfile => $namesfile,
- #                                       -nodesfile => $nodesfile);
-  
-  my $NCBI_TAX = Bio::DB::Taxonomy->new(-source => 'entrez');
-  my $taxonid = $NCBI_TAX->get_taxonid($species);
-  my $tree = $NCBI_TAX->get_tree($species);
-  my $root = $tree->get_root_node;
-  my $curr_node = $root;
-  while(my @nodes = $curr_node->each_Descendent)
+  my $NCBI_TAX;
+  if($mode eq "flatfile")
   {
-    $curr_node = $nodes[0];
-    my $id = $curr_node->id;
-    my $rank = $curr_node->rank;
-    my $factory = Bio::DB::EUtilities->new(-eutil => 'esummary',
-                                           -db    => 'taxonomy',
-                                           -id    => $id );
-    my ($name) = $factory->next_DocSum->get_contents_by_name("ScientificName");
-    $tax_hash{$rank} = $name;
+    my $tax_dir = "/rhome/sahrendt/bigdata/Data/Taxonomy";
+    my $nodesfile = "$tax_dir/nodes.dmp";
+    my $namesfile = "$tax_dir/names.dmp";
+    my $indexdir = "$tax_dir";
+    $NCBI_TAX = Bio::DB::Taxonomy->new(-source => 'flatfile',
+                                       -directory => $tax_dir,
+                                       -namesfile => $namesfile,
+                                       -nodesfile => $nodesfile);
+    #print $NCBI_TAX->index_directory,"\n";
   }
-  return \%tax_hash;
+  else
+  {  
+    $NCBI_TAX = Bio::DB::Taxonomy->new(-source => 'entrez');
+  }
+  if(my $taxonid = $NCBI_TAX->get_taxonid($species))
+  {
+    my $tree = $NCBI_TAX->get_tree($species);
+    my $root = $tree->get_root_node;
+    my $curr_node = $root;
+    while(my @nodes = $curr_node->each_Descendent)
+    {
+      $curr_node = $nodes[0];
+      my $id = $curr_node->id;
+      my $rank = $curr_node->rank;
+      my $factory = Bio::DB::EUtilities->new(-eutil => 'esummary',
+                                             -db    => 'taxonomy',
+                                             -id    => $id );
+      my ($name) = $factory->next_DocSum->get_contents_by_name("ScientificName");
+      $tax_hash{$rank} = $name;
+    }
+    return \%tax_hash;
+  }
+  else
+  {
+    return 0 if ($species =~ /^\w+$/);
+    my $genus = (split(/\s/,$species))[0];
+    my $ret = getTaxonomy($genus);
+    return $ret;
+  }
 }
 
 #####
