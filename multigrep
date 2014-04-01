@@ -1,0 +1,7 @@
+# Description: Uses the items in a multi-line file as the search terms for grep
+# Author: Steven Ahrendt
+####################
+while read NAME
+do
+    grep $NAME $2
+done < $1 
