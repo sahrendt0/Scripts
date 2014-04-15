@@ -22,8 +22,10 @@ package SeqAnalysis;
 #  [x] get sequences            : getSeqs(str fasta_filename, arrayref accnos)
 #  [x] seq to hash              : seq2hash(str seq)
 #  [x] hmmscan/search parse     : hmmParse(str filename)
-#  [ ] get taxonomy for species : getTaxonomy(str genus_species)
+#  [x] get taxonomy for species : getTaxonomy(str genus_species)
+#  [x] print taxonomy		: printTaxonomy(hash_ref taxonomy)
 #  [x] index fastafile          : indexFasta(str filename)
+#  [x] remove seq:uence		: removeSeq(str accno)
 ########################
 use strict;
 use warnings;
@@ -32,9 +34,29 @@ use Bio::Seq;
 use Bio::SeqIO;
 use Bio::Taxon;
 use Bio::DB::EUtilities;
+use Data::Dumper;
 use base 'Exporter';  # to export our subroutines
 
-our @EXPORT = qw(seq2hash getSeqs getTTRatio removeIntron getConsensus getProfile revTrans getSixFrame seqTranslate getMotifPos getGC getProtMass getHammDist getRevComp transcribe hmmParse getTaxonomy indexFasta); # export always
+our @EXPORT = qw(seq2hash 
+                 getSeqs 
+                 getTTRatio 
+                 removeIntron 
+                 getConsensus 
+                 getProfile 
+                 revTrans 
+                 getSixFrame 
+                 seqTranslate 
+                 getMotifPos 
+                 getGC 
+                 getProtMass 
+                 getHammDist 
+                 getRevComp
+                 transcribe 
+                 hmmParse 
+                 getTaxonomy 
+                 indexFasta
+                 printTaxonomy
+); # export always
 
 our %CODONS_3 = ("MET" => ["ATG"],
                  "ILE" => ["ATA","ATC","ATT"],
@@ -194,6 +216,9 @@ sub getTaxonomy
 {
   my $species = shift @_;
   my $mode = shift @_;
+  my $verb = shift @_;
+  print $species if $verb;
+  print "($mode)\n" if $verb;
   my %tax_hash;
   my $NCBI_TAX;
   if($mode eq "flatfile")
@@ -232,10 +257,100 @@ sub getTaxonomy
   }
   else
   {
-    return 0 if ($species =~ /^\w+$/);
+    warn "Failed: <$species>\n";
+    if ($species =~ /^\S+$/)
+    {
+      warn "<$species> is just one word; nothing more to do\n";
+      $tax_hash{"kingdom"} = "NULL";
+      return \%tax_hash;
+    }
     my $genus = (split(/\s/,$species))[0];
-    my $ret = getTaxonomy($genus);
+    warn "Try again with <$genus>\n";
+    my $ret = getTaxonomy($genus,$mode,$verb);
     return $ret;
+  }
+}
+##########
+## Subroutine printTaxonomy
+#    Input: reference to taxonomy hash
+#           array of taxonomic ranks to use
+#           name of specific species (leave blank to print all)
+#    Returns: none; prints to screen
+################
+sub printTaxonomy
+{
+  #my $tax = shift @_;
+  my %tax_hash = %{shift @_};
+  my @ranks = @{shift @_};
+  my $spec = shift @_;
+  my $acc = shift @_;
+  my @species;
+  my $nr = 0; # counter for levels w/ no rank
+  my $str_to_print = "$acc\t";  # final formatted string to print if all checks are met
+  if($spec eq "")
+  {
+    @species = sort keys %tax_hash;
+  }
+  else
+  {
+    push @species, $spec;
+  }
+  foreach my $name (@species)
+  {
+    #print $name,"\t";
+    for(my $rc = 0; $rc < scalar(@ranks);$rc++)
+    {
+      my $rank = lc($ranks[$rc]);
+      my $fl = (split(//,$rank))[0];
+      $str_to_print .= "$fl\__";
+      if (exists $tax_hash{$name}{$rank})
+      {
+        $str_to_print .= $tax_hash{$name}{$rank};
+      }
+      else
+      {
+        if($rank eq "species")
+        {
+          $str_to_print .= $name;
+        }
+        else
+        {
+          #print "no_rank";
+          warn "$name has no_rank at $rank\n";
+          $nr++;
+          my @fuzzy_ranks = grep {/$rank/} keys %{$tax_hash{$name}};
+          if(scalar(@fuzzy_ranks) > 0) 
+          {
+            warn "possible alternatives: @fuzzy_ranks\n";
+            if(scalar(@fuzzy_ranks) == 1)
+            {
+              warn "using $fuzzy_ranks[0]";
+              $str_to_print .= "$tax_hash{$name}{$fuzzy_ranks[0]}";
+              $nr--;
+            }
+          }
+          else
+          {
+            $str_to_print .= "no_rank";
+          }
+          warn Dumper \%tax_hash;
+        }
+        ## todo: fuzzy match to existing ranks
+        #  eg. if no_rank is "class", grab "subclass" instead
+      }
+      $str_to_print .= ";" if($rc != (scalar(@ranks)-1));
+    }
+    if($nr > 0)
+    {
+      warn "Errors with $name: data missing from critical taxonomic levels.\n";
+      open(my $fh,">>", "Failed");
+      print $fh "$acc\n";
+      close($fh);
+    }
+    else
+    {
+      print "$str_to_print\n";
+    }
   }
 }
 

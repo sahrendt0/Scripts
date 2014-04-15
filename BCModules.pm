@@ -10,10 +10,50 @@ use Bio::Seq;
 use Bio::SeqIO;
 use base 'Exporter';  # to export our subroutines
 
-our @EXPORT = qw(indexProteomes indexTaxonomy); # export always
+our @EXPORT = qw(indexProteomes 
+                 indexTaxonomy
+                 indexPFAM
+); # export always
 
-my $dbDir = "/rhome/sahrendt/bigdata/Genomes";
-my $protDir = "$dbDir/Protein";
+our $dbDir = "/rhome/sahrendt/bigdata/Genomes";
+our $protDir = "$dbDir/Protein";
+our $funcDir = "$dbDir/Functional";
+our $PFAMDir = "$funcDir/PFAM";
+
+#######
+## Subroutine: indexPFAM
+#  Input:
+#  Returns: 
+###############
+sub indexPFAM
+{
+  my %hash;
+  my $pfamFile = shift @_;
+  $pfamFile = join("/",$PFAMDir,$pfamFile);
+  my @key_names = qw(PROTEIN_NAME LOCUS GENE_CONTIG PFAM_ACC PFAM_NAME PFAM_DESCRIPTION PFAM_START PFAM_STOP LENGTH PFAM_SCORE PFAM_EXPECTED);
+  open(my $fh, "<", $pfamFile) or die "Can't open $pfamFile: $!\n";
+  my $lc = -1;
+  while (my $line = <$fh>)
+  {
+    $lc++;
+    chomp $line;
+    next if($line =~ /^#/);
+    next if($lc == 0);
+    my @data = split(/\t/,$line);
+    $hash{$data[1]}{$key_names[0]} = $data[0];
+    $hash{$data[1]}{$key_names[2]} = $data[2];
+    push( @{$hash{$data[1]}{$key_names[3]}}, $data[3]);
+    push( @{$hash{$data[1]}{$key_names[4]}}, $data[4]);
+    push( @{$hash{$data[1]}{$key_names[5]}}, $data[5]);
+    push( @{$hash{$data[1]}{$key_names[6]}}, $data[6]);
+    push( @{$hash{$data[1]}{$key_names[7]}}, $data[7]);
+    push( @{$hash{$data[1]}{$key_names[8]}}, $data[8]);
+    push( @{$hash{$data[1]}{$key_names[9]}}, $data[9]);
+    push( @{$hash{$data[1]}{$key_names[10]}}, $data[10]);
+  }
+  close($fh);
+  return %hash;
+}
 
 #######
 ## Subroutine: indexTaxonomy
@@ -52,11 +92,11 @@ sub indexProteomes
   
   foreach my $file (@files)
   {
-    my $fasta_in = Bio::SeqIO->new(-file => $file,
+    my $fasta_in = Bio::SeqIO->new(-file => "$protDir/$file",
                                    -format => "fasta");
     while (my $seq_obj = $fasta_in->next_seq)
     {
-      $hash{$seq_obj->display_id} = $seq_obj->seq;
+      $hash{$seq_obj->display_id} = $seq_obj;
     }
   }
   
