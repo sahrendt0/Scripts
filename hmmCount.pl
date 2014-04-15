@@ -17,7 +17,7 @@ my ($help,$verb);
 GetOptions ('i|input=s' => \$input,
             'h|help'   => \$help,
             'v|verbose' => \$verb);
-my $usage = "Usage: hmmCount.pl -i input\nWrites to file: $input\.counts\n";
+my $usage = "Usage: hmmCount.pl -i input\nWrites to file\n";
 die $usage if $help;
 die "No input.\n$usage" if (!$input);
 

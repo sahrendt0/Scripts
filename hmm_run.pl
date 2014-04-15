@@ -52,10 +52,12 @@ if(!$fastafile)
 }
 else
 {
-  $dir = "";
+  my @ff = split(/\//,$fastafile);
+  $fastafile = pop @ff;
+  $dir = join("/",@ff);
   push @fasta_files,$fastafile;
 }
-print OUT "cd ",cwd(),"\n";  
+#print OUT "cd ",cwd(),"\n";  
 foreach my $fasta_file (@fasta_files)
 {
   my $outfilename;

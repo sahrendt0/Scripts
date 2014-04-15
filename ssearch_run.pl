@@ -30,6 +30,7 @@ GetOptions ('f|fasta=s' => \$fasta_file,
             'T|T=s'     => \$threads);
 
 my $usage = "Usage: perl ssearch_run.pl -f fasta_file -t abbr [-e eval]  [-Z db_size] [-T threads]\n";
+$usage .= "Single use: ssearch36_t -T threads -S -m 8C -E eval -k 10000 -Z db_size query_file db_file > output\n";
 die $usage if ($help);
 die $usage if (!$fasta_file);
 
@@ -52,7 +53,7 @@ if(($fasta_file) && ($abbr))
     print OUT "-E $eval "; # e-val cutoff
     print OUT "-k 10000 "; # num of shuffles
     if($db_size){print OUT "-Z $db_size ";}
-    print OUT "./$fasta_file $gdir/$file > $abbr-vs-",substr($file,0,4),".ssearch\n";
+    print OUT "$fasta_file $gdir/$file > $abbr-vs-",substr($file,0,4),".ssearch\n";
   }
   print `chmod 744 $abbr\_ssearch.sh`;
 }

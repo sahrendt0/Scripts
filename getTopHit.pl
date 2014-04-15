@@ -21,10 +21,10 @@ GetOptions ('i|input=s' => \$infile,
             'v|verbose' => \$verb,
             'a|all'     => \$all,
             'f|format=s' => \$format);
-my $usage = "Usage: getTopHit.pl -i input\n";
+my $usage = "Usage: getTopHit.pl -i input -f format\nOutput to STDOUT\n";
 die $usage if $help;
 die "No input.\n$usage" if (!$infile) && (!$all);
-
+die "No format.\n$usage" if (!$format);
 #####-----Main-----#####
 push @infiles,$infile;
 

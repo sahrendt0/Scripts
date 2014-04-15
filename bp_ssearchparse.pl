@@ -3,7 +3,8 @@
 # Description: Parses all ssearch files in the given directory; Gathers counts and sequences.
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
-# Date: 11.18.13
+# Date: 3.20.14 
+#        Updated for single mode
 #####################################
 # [x]: Hash of organisms
 # [ ]: Array of genes + counts
@@ -13,9 +14,12 @@
 
 use warnings;
 use strict;
+use lib '/rhome/sahrendt/Scripts';
 use Bio::SearchIO;
 use Bio::SeqIO;
 use Getopt::Long;
+use BCModules;
+use SeqAnalysis;
 
 ## Structures, variables, etc.
 my (%peps, %taxa, @genes);
@@ -29,59 +33,83 @@ my @genelist;    # list of gene IDs in $genes_file
 my $ssearch_dir = ".";   # directory of ssearch results
 my $taxonlist_file = "$gen_dir/taxonlist";
 my $genes_file; # Fasta file containing gene(s) used in ssearch
+my $single_ssearch;
 my @total_orgs; # organisms queried
 my $verbose;
 my $help;
 my $abbrev;
-GetOptions ('d|dir=s'    => \$ssearch_dir, 
-            't|taxon=s'  => \$taxonlist_file,
-            'f|fasta=s'  => \$genes_file,
-            'v|verbose'  => \$verbose,
-            'h|help'     => \$help,
-            'a|abbrev=s' => \$abbrev);
+my $inprot; # run in single mode, using only one genome and one proteome file
+
+GetOptions ('d|dir=s'      => \$ssearch_dir, 
+            'S|single=s'   => \$inprot,
+            'ssearch=s'    => \$single_ssearch,
+            't|taxon=s'    => \$taxonlist_file,
+            'f|fasta=s'    => \$genes_file,
+            'v|verbose'    => \$verbose,
+            'h|help'       => \$help,
+            'a|abbrev=s'   => \$abbrev);
 
 my $usage = "Usage: bp_ssearchparse.pl -f fastafile -t taxon_list -a abbrev\n";
+$usage .= "Single usage: bp_ssearchparse.pl -f fastafile -t taxon_list -a abbrev -S proteome [--ssearch ssearchfile]\n";
 die $usage if ($help);
 die $usage if (!$genes_file);
 
 ############
 ## 0. Check for ssearch files
 ############
-opendir(DIR,$ssearch_dir);
-@result_list = grep {/\.SSEARCH/i} readdir(DIR);
-closedir(DIR);
-if(scalar @result_list == 0)
+if($single_ssearch)
 {
-  warn "Can't find any .ssearch files in directory \"$ssearch_dir\"\n";
-  warn "Try a different directory...\n";
-  exit;
+  push @result_list,$single_ssearch;
+}
+else
+{
+  opendir(DIR,$ssearch_dir);
+  @result_list = grep {/\.SSEARCH/i} readdir(DIR);
+  closedir(DIR);
+  if(scalar @result_list == 0)
+  {
+    warn "Can't find any .ssearch files in directory \"$ssearch_dir\"\n";
+    warn "Try a different directory...\n";
+    exit;
+  }
 }
 
 ############
 ## 1. Index proteomes
 ############
-opendir(PEP,"$pep_dir");
-@proteomes = grep{ /\.fasta$/ } readdir(PEP);
-closedir(PEP);
-
-foreach my $prot (@proteomes)
+if($inprot)
 {
-  if($verbose){print $prot,"\n";}
-  my $spec = (split(/\_/,$prot))[0];
-  $spec = substr($spec,0,4);
-  print $spec,"\n";
-  my $seqio_obj = Bio::SeqIO->new(-file => "$pep_dir/$prot",
-                                  -format => 'fasta');
-  while(my $seq = $seqio_obj->next_seq)
-  {
-    my $trunc_id = $seq->display_id;
-    if(length($trunc_id) > 50)
-    {
-      $trunc_id = substr($trunc_id,0,50);
-    }
-    $peps{$spec}{$trunc_id} = $seq;
-  }
+#  push @proteomes,$inprot;
+  %peps = indexFasta($inprot);
 }
+else
+{
+  %peps = indexProteomes;
+#  opendir(PEP,"$pep_dir");
+#  @proteomes = grep{ /\.fasta$/ } readdir(PEP);
+#  closedir(PEP);
+}
+
+#foreach my $prot (@proteomes)
+#{
+#  if($verbose){print $prot,"\n";}
+#  my $spec = (split(/\_/,$prot))[0];
+#  $spec = substr($spec,0,4);
+#  print $spec,"\n";
+#  %peps = indexProteomes;
+
+#  my $seqio_obj = Bio::SeqIO->new(-file => "$pep_dir/$prot",
+#                                  -format => 'fasta');
+#  while(my $seq = $seqio_obj->next_seq)
+#  {
+#    my $trunc_id = $seq->display_id;
+#    if(length($trunc_id) > 50)
+#    {
+#      $trunc_id = substr($trunc_id,0,50);
+#    }
+#    $peps{$spec}{$trunc_id} = $seq;
+#  }
+#}
 
 ###########
 ## 2. Hash of organisms
@@ -157,7 +185,11 @@ print OUT "\n";
 #                                -format => "fasta");
 foreach my $key (sort @total_orgs)#keys %taxa)
 {
-  if($verbose){print "$taxa{$key}[0]\t";}
+  if($verbose)
+  {
+    print "$taxa{$key}[0]\t";
+    print OUT "$taxa{$key}[0]\t";
+  }
   print OUT "$key\t"; # This prints out Org ID; can also print out full organism name
   foreach my $gene (@genelist)
   {
@@ -173,7 +205,7 @@ foreach my $key (sort @total_orgs)#keys %taxa)
         if(!exists $uq_genes{$item})
         {
           if($verbose){print "\t$item\n";}
-          $fasout->write_seq($peps{$key}{$item});
+          $fasout->write_seq($peps{$item});
           $uq_genes{$item} = 1;
         }
       }
