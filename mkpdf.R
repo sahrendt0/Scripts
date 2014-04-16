@@ -6,32 +6,39 @@
 # Date: 6.1.11
 #         v1.0  
 #         v1.2  : added option for running BibTeX
-##################################################
-# Usage: mkpdf.R Rnwfile [-b]                    #             
+####################################
+# Usage: mkpdf.R Rnwfile [-b] [-v] #             
 #########################################################################################
 # When using BibTeX option, be sure that if "file.Rnw" exists, so too should "file.bib" #
 #########################################################################################
 
-args <- commandArgs(); 
+args <- commandArgs();
+help <- grep("-h",args)
 rnw <- grep("\\.Rnw",args)
-if(length(rnw))
-{
-  file <- args[rnw];
-  bib <- grep("-b",args) # check for addtional "-b" argument
-  file
-  filename <- strsplit(file,"\\."); filename <- filename[[1]][1];
-  Sweave(file);
-  pdflatex <- paste(c("pdflatex",filename), collapse=" ");
-  system(pdflatex); 
-  if(length(bib)){
-    bibtex <- paste(c("bibtex",filename),collapse=" ");
-    system(bibtex)
+if(length(help)) {
+  print("Usage: mkpdf.R file.Rnw [-b] [-v]")
+} else if(length(rnw)) {
+    file <- args[rnw];
+    bib <- grep("-b",args) # check for addtional "-b" argument
+    file
+    filename <- strsplit(file,"\\."); filename <- filename[[1]][1];
+    Sweave(file);
+    pdflatex <- paste(c("pdflatex",filename), collapse=" ");
     system(pdflatex); 
-    system(pdflatex); 
-  }
-  evince <- paste(c("evince", paste(c(filename,"pdf"),collapse="."), "&" ),collapse=" ");
-  system(evince)
+    if(length(bib))
+    {
+      bibtex <- paste(c("bibtex",filename),collapse=" ");
+      system(bibtex)
+      system(pdflatex); 
+      system(pdflatex); 
+    }
+    evince <- grep("-v",args) # check for "view" argument (open up evince)
+    if(length(evince))
+    {
+      evince <- paste(c("evince", paste(c(filename,"pdf"),collapse="."), "&" ),collapse=" ");
+      system(evince)
+    }
 } else {
-  print("No .Rnw file provided.")
-  print("Be sure you included the .Rnw file extension.")
+    print("No .Rnw file provided.")
+    print("Be sure you included the .Rnw file extension.")
 }
