@@ -16,34 +16,39 @@ my $PWD = getcwd;
 my $dataset;
 my ($db,@db_fasta,@db_tax);
 my %db_path = ("UNITE" => "/rhome/sahrendt/bigdata/Built_Env/dbs/UNITE",
-                "KS"    => "/rhome/sahrendt/bigdata/Built_Env/dbs/Seifert");
+                "KS"    => "/rhome/sahrendt/bigdata/Built_Env/dbs/Seifert_ITS_refdb");
+my @DB_OPTIONS = keys(%db_path);
 my @regs;
 my $RR;
+my $version = "1.6.0-dev";
 my ($help,$verb);
 
 GetOptions( 'dataset=s'  => \$dataset,
             'database=s' => \$db,
             'rr'       => \$RR,  # set to use "random removed" database
+            'version=s'   => \$version,
             'h|help'   => \$help,
             'v|verbose' => \$verb);
-my $usage = "Usage: /rhome/sahrendt/Scripts/qiime_workflow.pl --database database --dataset dataset\n";
+my $usage = "Usage: qiime_workflow_general.pl --database database --dataset dataset [--version]\n";
 die $usage if $help;
 die "No dataset.\n$usage" if !$dataset;
 die "No database.\n$usage" if !$db;
+die "Unknown database: \"$db\".\nOptions: @DB_OPTIONS\n$usage" if (!exists $db_path{$db});
 #####-----Main-----#####
 opendir(DIR,$PWD);
 @regs = grep {-l "$PWD/$_"} readdir(DIR);
 closedir(DIR);
 
+print "$db_path{$db}\n" if $verb;
 opendir(DB,$db_path{$db});
-@db_fasta = sort (grep { /\.fasta$/ } readdir(DB));
+@db_fasta = sort (grep { /$db.{0,3}\.aa\.fasta$/ } readdir(DB));
 closedir(DB);
-
-print "@db_fasta\n";
+print "@db_fasta\n" if $verb;
 
 opendir(DB,$db_path{$db});
-@db_tax = sort (grep { /\.txt$/ } readdir(DB));
+@db_tax = sort (grep { /$db.{0,3}\.tax$/ } readdir(DB));
 closedir(DB);
+print "@db_tax\n" if $verb;
 
 my $ind = 0; # index of fasta / taxonomy file to use
              # b/c of sorting, random removed (RR) version will always be index = 1 
@@ -64,9 +69,10 @@ foreach my $reg (@regs)
   open(my $sh, ">", $sh_file);
   loadModules($sh);
   print $sh "pick_otus.py -i $reg/$orig_fasta -o $reg\_otus/\n";
-  if($dataset eq "Amend")
+  if(($dataset eq "Amend") or ($dataset eq "Kinney"))
   {
-    $prefix = join("_",(split(/\_/,$reg))[0],$prefix); 
+    $prefix = join("_",(split(/\_/,$reg))[0],$prefix) if ($dataset eq "Amend");
+    $prefix = $reg if ($dataset eq "Kinney");
     print $sh "rename 's/seqs/$prefix\/' $reg\_otus/seqs*\n";
   }
   print $sh "pick_rep_set.py -i $reg\_otus/$prefix\_otus.txt -f ./$reg/$orig_fasta -l $reg\_otus/$prefix\_rep_set.log -o $reg\_otus/$prefix\_rep_set.fasta\n";
@@ -89,7 +95,7 @@ exit(0);
 sub loadModules
 {
   my $fh = shift @_;
-  print $fh "module load qiime\n";
+  print $fh "module load qiime/$version\n";
   print $fh "module load ncbi-blast\n";
   print $fh "module load FastTree\n";
 }
