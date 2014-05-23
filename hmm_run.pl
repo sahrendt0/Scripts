@@ -25,6 +25,7 @@ my $incE = 0;
 my $abbr = "";
 my $prog = "";
 my $help = 0;
+my $out = ".";
 my ($fastafile,@fasta_files);
 GetOptions ('i|input=s'   => \$hmmfile, 
             'f|fasta=s'   => \$fastafile,
@@ -32,8 +33,9 @@ GetOptions ('i|input=s'   => \$hmmfile,
             'e|eval=s'    => \$incE,
             't|type=s'    => \$abbr,
             'p|program=s' => \$prog,
-            'h|help+'     => \$help);
-my $usage = "Usage: hmm_run.pl -p hmmprogram -i hmmfile (-f fasta_file | -d proteome_dir) -e eval_threshold -t description\nCreates an executable shell script.\n";
+            'h|help+'     => \$help,
+            'o|out=s'     => \$out);
+my $usage = "Usage: hmm_run.pl -p hmmprogram -i hmmfile (-f fasta_file | -d proteome_dir) -e eval_threshold -t description [-o out_dir]\nCreates an executable shell script.\n";
 die $usage if ($help);
 die "Can't open $fastafile: $!\n$usage" if (!(-e $fastafile));
 die "Invalid hmmprogram: $prog\n\"hmmsearch\" or \"hmmscan\" only.\n$usage" if (($prog ne "hmmscan") and ($prog ne "hmmsearch"));
@@ -43,7 +45,7 @@ die "Invalid hmm profile: $hmmfile\n$usage" if ($hmmfile eq "");
 #####-----Main-----#####
 ## Create the shell script
 #print $hmmfile,"\n";
-open(OUT,">","$abbr\_$prog.sh");
+open(OUT,">","$out/$abbr\_$prog.sh");
 if(!$fastafile)
 {
   opendir(DIR,$dir);
@@ -79,7 +81,7 @@ foreach my $fasta_file (@fasta_files)
   print OUT "\n";
 }
 close(OUT);
-print `chmod 744 $abbr\_$prog.sh`;
+print `chmod 744 $out/$abbr\_$prog.sh`;
 
 warn "Done.\n";
 exit(0);

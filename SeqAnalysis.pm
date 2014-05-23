@@ -356,12 +356,14 @@ sub printTaxonomy
 
 #####
 ## Subroutine: hmmParse
-#    Input: filename
+#    Input: filename (must be m8 format)
+#           ret_val ("return as" value; default is hash)
 #    Returns: hash of counts
 #######
 sub hmmParse
 {
   my $hmmfile = shift @_;
+  my $ref = shift @_;
   my %hits;
 
   my (@seqs,%genes,$gene,$PFAM);
@@ -401,7 +403,14 @@ sub hmmParse
     }
     $hits{$PFAM}++;
   }
-  return %hits;
+  if($ref)
+  {
+    return \%hits;
+  }
+  else
+  {
+    return %hits;
+  }
 }
 
 #####
