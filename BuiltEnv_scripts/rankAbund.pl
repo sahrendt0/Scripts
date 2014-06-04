@@ -47,10 +47,10 @@ close($fh);
 foreach my $key (sort keys %hash)
 {
   my $count = 0;
-  print $key,"\n";
-  foreach my $level (sort {$hash{$key}{$b} <=> $hash{$key}{$a} } keys $hash{$key})
+  #print $key;
+  foreach my $level (sort {$hash{$key}{$b} <=> $hash{$key}{$a} } keys %{$hash{$key}})
   {
-    print "\t",$level,"\t",$hash{$key}{$level},"\n" if($count < 5);
+    print $key,"\t",$level,"\t",$hash{$key}{$level},"\n" if($count < 5);
     $count++;
   }
 }
