@@ -4,6 +4,8 @@
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
 # Date: 3.22.13
+#       5.23.14 :  updated; include shell script mode
+#                  Try to automate some more
 ######################################
 # Manual tasks:
 #  - Determine grid coordinates and save as refence gpf
@@ -24,15 +26,16 @@ use Getopt::Long;
 #########
 
 my ($ligand, $lig, $receptor, $rec, $ref_gpf); 
-my $help = 0;
-my $covex = 0;
+my ($help,$shell);
+my $covex;
 GetOptions ('l|ligand=s'   => \$ligand, 
             'la|labbr=s'   => \$lig,
             'r|receptor=s' => \$receptor,
             'ra|rabbr=s'   => \$rec,
             'g|gpf=s'      => \$ref_gpf,
-            'c|covex+'     => \$covex,
-            'h|help+'      => \$help);
+            'c|covex'     => \$covex,
+            'h|help'      => \$help,
+            's|shell'     => \$shell);
 
 if($help)
 {
@@ -41,22 +44,6 @@ if($help)
   exit;
 }
 
-if($covex)
-{
-  ## Set up autogrid:
-  my $autogrid = "autogrid4 -p $ref_gpf -l grid.glg";
-
-  ## Set up autodock
-  my $autodock = "autodock4 -p dock.dpf -l dock.dlg";  
-
-  ## Run autogrid
-  print `$autogrid`;
-
-  ## Run autodock
-  print `$autodock`;
-}
-else
-{
 ## Convert ligand to .pdbqt:
 my $prep_rec = "prepare_receptor4.py -r";
 
@@ -82,39 +69,46 @@ my $prep_dpf = join(" ","prepare_dpf4.py",
 ## Set up autodock
 my $autodock = "autodock4 -p $rec\_$lig\_dock.dpf -l $rec\_$lig\_dock.dlg";
 
-
 ###########
 # Running #
 ###########
 ## Prepare ligand
-print `$prep_lig`;
-
-## Create gpf
-print `$prep_gpf`;
-
-## Run autogrid
-print `$autogrid`;
-
-## Create dpf
-print `$prep_dpf`;
-##  Post processing of dpf: set "unbound_model" value to "bound" (as it should be by default), not "extended"
-open(DPF,"<$rec\_$lig\_dock.dpf") || die "Can't open dpf\n";
-open(TMP,">tmp");
-foreach my $line (<DPF>)
+if(!$shell)
 {
-  chomp $line;
-  my $newline = $line;
-  if($line =~ m/^unbound_model/)
+  print `$prep_lig`;
+  print `$prep_gpf`;
+  print `$autogrid`;
+  print `$prep_dpf`;
+  ##  Post processing of dpf: set "unbound_model" value to "bound" (as it should be by default), not "extended"
+  open(DPF,"<$rec\_$lig\_dock.dpf") || die "Can't open dpf\n";
+  open(TMP,">tmp");
+  foreach my $line (<DPF>)
   {
-    my($param,$value,@ar) = split(/\s/,$line);
-    $newline = join(" ",$param,"bound",@ar);
+    chomp $line;
+    my $newline = $line;
+    if($line =~ m/^unbound_model/)
+    {
+      my($param,$value,@ar) = split(/\s/,$line);
+      $newline = join(" ",$param,"bound",@ar);
+    }
+    print TMP "$newline\n";
   }
-  print TMP "$newline\n";
-}
-close(TMP);
-close(DPF);
-print `mv tmp $rec\_$lig\_dock.dpf`;
-
-## Run autodock
-print `$autodock`;
+  close(TMP);
+  close(DPF);
+  print `mv tmp $rec\_$lig\_dock.dpf`;
+  print `$autodock`;
+} 
+else
+{
+  open(my $sh, ">", "$rec\_$lig.sh");
+  print $sh "ln -s ../$receptor\.pdbqt\n";
+  print $sh "ln -s ../$ref_gpf\n";
+  print $sh "$prep_lig\n";
+  print $sh "$prep_gpf\n";
+  print $sh "$autogrid\n";
+  print $sh "$prep_dpf\n";
+  print $sh "sed -ie 's/extended/bound/g' $rec\_$lig\_dock.dpf\n";
+  print $sh "$autodock\n";
+  close($sh);
+  print `chmod 744 $rec\_$lig.sh`;
 }
