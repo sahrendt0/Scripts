@@ -32,7 +32,7 @@ GetOptions ('i|input=s' => \$input,
             'm|map=s'   => \$map,
             'h|help'   => \$help,
             'v|verbose' => \$verb);
-my $usage = "Usage: /rhome/sahrendt/Scripts/BuiltEnv_scripts/reorderPlot.pl -i input\n";
+my $usage = "Usage: /rhome/sahrendt/Scripts/BuiltEnv_scripts/reorderPlot.pl -i input\nDescription: Reorders columns to represent lat/country (Amend dataset)\n";
 die $usage if $help;
 die "No input.\n$usage" if (!$input);
 die "No map.\n$usage" if (!$map);
@@ -40,6 +40,8 @@ die "No map.\n$usage" if (!$map);
 #####-----Main-----#####
 
 %country_hash = getMapHash($map);
+
+#print Dumper \%country_hash;
 
 open(my $inH, "<", $input) or die "Can't open $input: $!\n";
 my @keys; # sampling location keys
@@ -73,7 +75,6 @@ close($inH);
 
 #print Dumper \%data_hash;
 
-
 ## Output: sort by geographic order, then sort by taxon class order (if possible)
 print "Taxon\t";
 print join("\t",@levels),"\n";
@@ -90,7 +91,6 @@ foreach my $key (@countries)
 }
 
 #print Dumper \%sort_hash;
-
 warn "Done.\n";
 exit(0);
 

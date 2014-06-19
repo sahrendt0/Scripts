@@ -25,7 +25,8 @@ package SeqAnalysis;
 #  [x] get taxonomy for species : getTaxonomy(str genus_species)
 #  [x] print taxonomy		: printTaxonomy(hash_ref taxonomy)
 #  [x] index fastafile          : indexFasta(str filename)
-#  [x] remove seq:uence		: removeSeq(str accno)
+#  [x] remove sequence		: removeSeq(str accno)
+#  [x] hash PFAM		: hashPFAM(str filename)
 ########################
 use strict;
 use warnings;
@@ -56,6 +57,7 @@ our @EXPORT = qw(seq2hash
                  getTaxonomy 
                  indexFasta
                  printTaxonomy
+                 hashPFAM
 ); # export always
 
 our %CODONS_3 = ("MET" => ["ATG"],
@@ -187,6 +189,30 @@ our %AA = ("ATG" => "M",
            "TGA" => "*",
            "TAA" => "*",
            "TAG" => "*");
+
+
+##### 
+## Subroutine: hashPFAM
+########
+sub hashPFAM
+{
+  my %hash;
+  my $infile = shift @_;
+  open(my $fh, "<", $infile) or die "Can't open $infile: $!\n";
+  while(my $line = <$fh>)
+  {
+    chomp $line;
+    next if($line =~ /^#/);
+    my ($PROTEIN_NAME, $LOCUS, $GENE_CONTIG, $PFAM_ACC, $PFAM_NAME, $PFAM_DESCRIPTION, $PFAM_START, $PFAM_STOP, $LENGTH, $PFAM_SCORE, $PFAM_EXPECTED) = split(/\s+/,$line);
+    $PFAM_ACC =~ s/\.\d+$//;
+    $hash{$LOCUS}{$PFAM_ACC}{"Desc"} = $PFAM_DESCRIPTION; 
+    $hash{$LOCUS}{$PFAM_ACC}{"Score"} = $PFAM_SCORE; 
+    $hash{$LOCUS}{$PFAM_ACC}{"Eval"} = $PFAM_EXPECTED; 
+  }
+  close($fh);
+  return %hash;
+}
+
 
 #####
 ## Subroutine: indexFasta
@@ -358,13 +384,15 @@ sub printTaxonomy
 ## Subroutine: hmmParse
 #    Input: filename (must be m8 format)
 #           ret_val ("return as" value; default is hash)
-#    Returns: hash of counts
+#    Returns: array with:  hash of counts and hash of data
 #######
 sub hmmParse
 {
   my $hmmfile = shift @_;
   my $ref = shift @_;
   my %hits;
+  my %hash;
+  my @ret;
 
   my (@seqs,%genes,$gene,$PFAM);
 #  my ($type,$tmp,$org,$mod,$ext);
@@ -373,6 +401,7 @@ sub hmmParse
 #  $tmp = $filename[1]; # "vs"
 #  $mod = $filename[3]; # "tbl"
   my $ext = $filename[-1];
+  print $ext,"\n";
 #  if($ext =~ m/scan/)
 #  {
 #    @flags = (1,0,2,0);
@@ -395,22 +424,35 @@ sub hmmParse
     {
       $gene = $q_name;
       $PFAM = join(";", (split(/\./,$t_acc))[0], $t_name);
+      $hash{$q_name}{$t_acc}{"Desc"} = $t_name; 
+      $hash{$q_name}{$t_acc}{"Score"} = $full_score; 
+      $hash{$q_name}{$t_acc}{"Eval"} = $full_eval; 
     }
     if($ext =~ /search/)
     {
       $gene = $t_name;
       $PFAM = join(";",(split(/\./,$q_acc))[0],$q_name);
+      $hash{$t_name}{$q_acc}{"Desc"} = $q_name; 
+      $hash{$t_name}{$q_acc}{"Score"} = $full_score; 
+      $hash{$t_name}{$q_acc}{"Eval"} = $full_eval; 
     }
     $hits{$PFAM}++;
+    #$hash{$t_name}{$q_acc}{"Desc"} = $q_name; 
+    #$hash{$t_name}{$q_acc}{"Score"} = $full_score; 
+    #$hash{$t_name}{$q_acc}{"Eval"} = $full_eval; 
   }
-  if($ref)
-  {
-    return \%hits;
-  }
-  else
-  {
-    return %hits;
-  }
+  push (@ret, \%hash);
+  push (@ret, \%hits);
+  return @ret;
+
+ # if($ref)
+ # {
+ #   return \%hash;
+ # }
+ # else
+ # {
+ #   return %hash;
+ # }
 }
 
 #####

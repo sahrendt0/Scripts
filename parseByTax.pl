@@ -30,14 +30,14 @@ my @gene_names;
 while (my $line = <$fh>)
 {
   chomp $line;
-  my @data = split(/\t/,$line);
+  my @data = split(/\s+/,$line);
   if($lc == 0)
   {
     @gene_names = @data;
   }
   else
   {
-    for(my $i=1;$i<scalar(@gene_names); $i++)
+    for(my $i=0;$i<scalar(@gene_names); $i++)
     {
       $out_table{$data[0]}{$gene_names[$i]} = $data[$i];
     }

@@ -37,7 +37,7 @@ GetOptions ('i|input=s'   => \$hmmfile,
             'o|out=s'     => \$out);
 my $usage = "Usage: hmm_run.pl -p hmmprogram -i hmmfile (-f fasta_file | -d proteome_dir) -e eval_threshold -t description [-o out_dir]\nCreates an executable shell script.\n";
 die $usage if ($help);
-die "Can't open $fastafile: $!\n$usage" if (!(-e $fastafile));
+#die "Can't open $fastafile: $!\n$usage" if (!(-e $fastafile));
 die "Invalid hmmprogram: $prog\n\"hmmsearch\" or \"hmmscan\" only.\n$usage" if (($prog ne "hmmscan") and ($prog ne "hmmsearch"));
 die "Please provide a description.\n$usage" if ($abbr eq "");
 die "Invalid hmm profile: $hmmfile\n$usage" if ($hmmfile eq "");

@@ -37,7 +37,7 @@ my ($help,$verb);
 GetOptions (\'i|input=s\' => \\$input,
             \'h|help\'   => \\$help,
             \'v|verbose\' => \\$verb);
-my $usage = "Usage: '.$input.' -i input\n";
+my $usage = "Usage: '.$input.' -i input\n'.$desc.'\n";
 die $usage if $help;
 die "No input.\n$usage" if (!$input);
 

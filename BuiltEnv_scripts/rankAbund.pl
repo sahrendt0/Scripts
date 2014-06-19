@@ -35,9 +35,12 @@ while(my $line = <$fh>)
   else
   {
     my ($level,@abund) = split(/\t/,$line);
-    for(my $i=0;$i<scalar(@hash_keys); $i++)
+    if($level =~ /Ascomycota/)
     {
-      $hash{$hash_keys[$i]}{$level} = $abund[$i];
+      for(my $i=0;$i<scalar(@hash_keys); $i++)
+      {
+        $hash{$hash_keys[$i]}{$level} = $abund[$i];
+      }
     }
   }
 }

@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # Script: replot.pl
-# Description:  
+# Description: Changes default sampleID names to countries 
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
 # Date: 05.30.2014

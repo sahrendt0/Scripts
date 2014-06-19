@@ -34,14 +34,10 @@ die $usage if $help;
 
 ## UNITE top 5
 ## Static locations
-print "UNITE,static\n";
-topFive(\%UNITE_hash,\@static);
-print "UNITE,dynamic\n";
-topFive(\%UNITE_hash,\@dynamic);
-print "Merged,static\n";
-topFive(\%Merged_hash,\@static);
-print "Merged,dynamic\n";
-topFive(\%Merged_hash,\@dynamic);
+print "static\n";
+topFive(\%UNITE_hash,\%Merged_hash,\@static);
+print "dynamic\n";
+topFive(\%UNITE_hash,\%Merged_hash,\@dynamic);
 
 #foreach my $sampleID (sort keys %UNITE_hash)
 #{
@@ -60,16 +56,19 @@ exit(0);
 
 #####-----Subroutines-----#####
 sub topFive {
-  my $hash = shift @_;
+  my $hash1 = shift @_;
+  my $hash2 = shift @_;
   my $keys = shift @_;
 
   foreach my $id (@{$keys})
   {
-    print $id,"\t";
+    print $id,"\n";
     for (my $i=0;$i<5;$i++)
     {
-      print $hash->{$id}{"Tax"}[$i],"\t";
-      print $hash->{$id}{"Score"}[$i],"\n";
+      print $hash1->{$id}{"Tax"}[$i],"\t";
+      print $hash1->{$id}{"Score"}[$i],"\t";
+      print $hash2->{$id}{"Tax"}[$i],"\t";
+      print $hash2->{$id}{"Score"}[$i],"\n";
     }
   }
 }
