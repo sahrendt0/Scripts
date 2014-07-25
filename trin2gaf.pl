@@ -16,8 +16,8 @@
 # Tasks
 #  [ ] get taxID from species (col 13)
 #  [ ] get PMID reference from best blast hit (col 6)
-#  [ ] get namespace of GO ID (col 9)
-#  [ ] use col 1 for col 15
+#  [ ] get namespace of GO ID (col 9): "C", "P", "F"
+#  [x] use col 1 for col 15
 ######################################
 use warnings;
 use strict;
@@ -43,18 +43,27 @@ while (my $line = <$fh>)
 {
   next if($line =~ /^#/);
   chomp $line;
-  my($gene_id, $transcript_id, $top_blX, $RNAMMER, $prot_id, $prot_coords, $top_blP, $PFAM, $SigP, $TMHMM, $eggnog, $GO) = split(/\t/,$line); 
-  my @gaf_line = qw(. . . . . . . . . . . . . . . . .);
-
-  # set up DB fields
-  $gaf_line[0] = "UniProtKB";
-#  my $DB_obj = split(/\^/,$top_blX);
-  if($top_blX ne ".")
+  my($gene_id, $transcript_id, $top_blX, $RNAMMER, $prot_id, $prot_coords, $top_blP, $PFAM, $SigP, $TMHMM, $eggnog, $GO) = split(/\t/,$line);
+  if($GO ne ".")
   {
-    my($db,$db_obj_id,$db_obj_sym) = split(/\|/, (split(/\^/,$top_blX))[0]);
-    $gaf_line[1] = $db_obj_id;
-    $gaf_line[2] = $db_obj_sym; 
-    print "@gaf_line\n";
+    my @go_terms = split(/\`/,$GO);
+    foreach my $goID (@go_terms)
+    {   
+      my($ID,$type,$desc) = split(/\^/,$goID);
+      
+      my @gaf_line = qw(. . . . . . . . . . . . . . . . .);
+
+      # set up DB fields
+      $gaf_line[0] = "UniProtKB";
+      $gaf_line[14] = $gaf_line[0];
+    #  my $DB_obj = split(/\^/,$top_blX);
+      my($db,$db_obj_id,$db_obj_sym) = split(/\|/, (split(/\^/,$top_blX))[0]);
+      $gaf_line[1] = $db_obj_id;
+      $gaf_line[2] = $db_obj_sym; 
+      $gaf_line[4] = $ID;
+      $gaf_line[8] = uc((split(//, (split(/\_/,$type))[1] ))[0]);
+      print "@gaf_line\n";
+    }
   }
 }
 close($fh);
