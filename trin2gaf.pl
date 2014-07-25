@@ -39,7 +39,7 @@ die "No input.\n$usage" if (!$input);
 
 #####-----Main-----#####
 open(my $fh,"<",$input) or die "Can't open $input: $!\n";
-while my $line ($fh)
+while (my $line = <$fh>)
 {
   next if($line =~ /^#/);
   chomp $line;
@@ -49,10 +49,13 @@ while my $line ($fh)
   # set up DB fields
   $gaf_line[0] = "UniProtKB";
 #  my $DB_obj = split(/\^/,$top_blX);
-  my($db,$db_obj_id,$db_obj_sym) = split(/\|/, (split(/\^/,$top_blX))[0]);
-  $gaf_line[1] = $db_obj_id;
-  $gaf_line[2] = $db_obj_sym; 
-  print "@gaf_line\n";
+  if($top_blX ne ".")
+  {
+    my($db,$db_obj_id,$db_obj_sym) = split(/\|/, (split(/\^/,$top_blX))[0]);
+    $gaf_line[1] = $db_obj_id;
+    $gaf_line[2] = $db_obj_sym; 
+    print "@gaf_line\n";
+  }
 }
 close($fh);
 
