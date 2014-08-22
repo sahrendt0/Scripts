@@ -27,6 +27,7 @@ package SeqAnalysis;
 #  [x] index fastafile          : indexFasta(str filename)
 #  [x] remove sequence		: removeSeq(str accno)
 #  [x] hash PFAM		: hashPFAM(str filename)
+#  [ ] dinucleotide		: diNucDist(str sequence)
 ########################
 use strict;
 use warnings;
@@ -34,7 +35,7 @@ use Bio::Perl;
 use Bio::Seq;
 use Bio::SeqIO;
 use Bio::Taxon;
-use Bio::DB::EUtilities;
+#use Bio::DB::EUtilities;
 use Data::Dumper;
 use base 'Exporter';  # to export our subroutines
 
@@ -59,6 +60,7 @@ our @EXPORT = qw(seq2hash
                  printTaxonomy
                  hashPFAM
                  %CODONS_1
+                 diNucDist
 ); # export always
 
 our %CODONS_3 = ("MET" => ["ATG"],
@@ -191,6 +193,25 @@ our %AA = ("ATG" => "M",
            "TAA" => "*",
            "TAG" => "*");
 
+
+#####
+## Subroutine: diNucDist
+#    Input: sequence (string)
+#    Returns: hash of dinucleotide (distribution)
+########
+sub diNucDist
+{
+  my %hash;
+  my $seq = shift @_;
+  my @seq1 = $seq =~ /(.{2})/g;
+  my @seq2 = substr($seq,1) =~ /(.{2})/g;
+  my @both = (@seq1,@seq2);
+  foreach my $diNuc (@both)
+  {
+    $hash{$diNuc}++;
+  }
+  return %hash;
+}
 
 ##### 
 ## Subroutine: hashPFAM
