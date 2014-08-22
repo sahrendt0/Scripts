@@ -40,6 +40,9 @@ foreach my $cmpd (@compounds)
   #print $dirname,"\n";
   #print `mkdir $dirname`;
 }
+
+print `mkdir Ligands`;
+#print `mv A1* ./Ligands`;
 warn "Done.\n";
 exit(0);
 

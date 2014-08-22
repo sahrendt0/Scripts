@@ -18,7 +18,7 @@ GetOptions ('i|input=s' => \$input,
             'a|abbr=s'  => \$abbr,
             'h|help'   => \$help,
             'v|verbose' => \$verb);
-my $usage = "Usage: /home/sahrendt/Scripts/docking_scripts/batch_docking.pl -i input -a abbr\n";
+my $usage = "Usage: /home/sahrendt/Scripts/docking_scripts/batch_docking.pl -i receptor_name -a abbr\n";
 die $usage if $help;
 die "No input.\n$usage" if (!$input);
 

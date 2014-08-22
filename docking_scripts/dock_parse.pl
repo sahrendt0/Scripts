@@ -3,9 +3,9 @@
 # Description: Parse an autodock .dlg file and prints free energy values (sorted) to _docking_results
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
-# Date: 11.27.13
+# Date: 6.25.14
 ##############
-# Usage: dock_parse.pl -i dlg_file
+# Usage: dock_parse.pl -i dlg_file | -a
 ###################
 # Entries are between "" and "________________________________________________________________________________"
 ###############
@@ -14,15 +14,18 @@ use warnings;
 use Getopt::Long;
 
 #####-----Global Variables-----#####
-my $infile;
+my $input;
+my $all;
+my $dir = ".";
 my ($help,$verb);
-GetOptions ("i|infile=s" => \$infile,
+GetOptions ("i|infile=s" => \$input,
+            "a|all"      => \$all,
             "h|help"     => \$help,
             "v|verbose"  => \$verb);
 
-my $usage = "Usage: dock_parse.pl -i dlg_file\n";
+my $usage = "Usage: dock_parse.pl -i dlg_file | -a\n";
 die $usage if($help);
-die "No input\n$usage" if (!$infile);
+die "No input\n$usage" if (!$input && !$all);
 
 #####-----Main-----#####
 my $entry_begin = "BEGINNING LAMARCKIAN GENETIC ALGORITHM DOCKING";
@@ -30,74 +33,92 @@ my $entry_end = "_______________________________________________________________
 my $max_runs = 100;
 my %runs;
 my %info;
+my @logs;
 
-open(IN,"<$infile") or die "Can't open file \"$infile\".\n";
-my $read = 0;
-my $run = 0;
-my $binding_energy;
-foreach my $line (<IN>)
+if($all)
 {
-  chomp $line;
-  if ($line =~ m/\s+$entry_begin/)
+  opendir(DIR,$dir);
+  my @dirs = grep {-d "$dir/$_" && ! /^\.{1,2}$/} readdir(DIR); 
+#  print join("\n",@dirs),"\n";
+  close(DIR);
+  foreach my $lig_dir (@dirs)
   {
-    $read = 1;
-    #print "Start reading\n";
+    opendir(DIR,$lig_dir);
+    my $log = (grep { /\.dlg$/ } readdir(DIR))[0];
+    push (@logs,join("/",$dir,$lig_dir,$log));
+    close(DIR);
   }
-  if ($read)
+}
+else
+{
+  push (@logs,$input);
+}
+
+#print join("\n",@logs),"\n";
+
+foreach my $infile (@logs)
+{
+  #print $infile,"\n";
+  open(IN,"<$infile") or die "Can't open file \"$infile\".\n";
+  my $read = 0;
+  my $run = 0;
+  my $binding_energy;
+  foreach my $line (<IN>)
   {
-    if ($line =~ m/^Run:\s+\d+\s\/\s\d+$/)
-    { 
-      #print "$line\t";
-      $run = (split(/[\:|\/]/,$line))[1];
-      $run =~ s/^\s+//;
-      $run =~ s/\s+$//g;
-      #print "$run\n";
-    }
-    if($line =~ m/Estimated Free Energy of Binding/)
+    chomp $line;
+    if ($line =~ m/\s+$entry_begin/)
     {
-      $binding_energy = (split(/=/,$line))[1];
-      #print "<$binding_energy>\n";
-      $binding_energy =~ s/^\s+//;
-      $binding_energy =~ s/\[$//;
-      $binding_energy =~ s/\s+$//;
-      #print "<$binding_energy>\n";
-      $binding_energy = (split(/ /,$binding_energy))[0];      
-      #print "<$binding_energy>\n";
-      #$info{'Bind'} = $binding_energy;
+      $read = 1;
+    }
+    if ($read)
+    {
+      if ($line =~ m/^Run:\s+\d+\s\/\s\d+$/)
+      { 
+        $run = (split(/[\:|\/]/,$line))[1];
+        $run =~ s/^\s+//;
+        $run =~ s/\s+$//g;
+      }
+      if($line =~ m/Estimated Free Energy of Binding/)
+      {
+        $binding_energy = (split(/=/,$line))[1];
+        $binding_energy =~ s/^\s+//;
+        $binding_energy =~ s/\[$//;
+        $binding_energy =~ s/\s+$//;
+        $binding_energy = (split(/ /,$binding_energy))[0];      
+      }
+    }
+    if (($line =~ m/^$entry_end$/) && ($run))
+    {
+      $read = 0;
+      $runs{$run} = $binding_energy;
+      last if ($run == $max_runs);
     }
   }
-  if (($line =~ m/^$entry_end$/) && ($run))
+  close(IN);
+  my @filename = split(/\//,$infile);
+  #print join("-",@filename),"\n";
+  my ($rec,$lig,$count,$ext) = split(/\_/,$filename[2]);
+  my $outstream = ">$filename[0]/$filename[1]/$rec\_$lig\_$count\_docking\_results";
+
+  if($verb)
   {
-    $read = 0;
-    #print "Stop reading\n";
-    #print $run,"\n";
-    #print $binding_energy,"\n";
-    $runs{$run} = $binding_energy;
-    #print "$runs{$run}\n";
-    last if ($run == $max_runs);
-  }
-}
-close(IN);
-my @filename = split(/\//,$infile);
-my ($rec,$lig,$ext) = split(/\_/,$filename[2]);
-my $outstream = ">$filename[0]/$filename[1]/$rec\_$lig\_docking\_results";
+    $outstream = ">&STDOUT";
+  } 
 
-if($verb)
-{
-  $outstream = ">&STDOUT";
-}
-
-open(OUT,$outstream);
-print OUT "#$infile:\n";
-print OUT "#Run\t";
-print OUT "Free Energy\t";
-print OUT "\n";
-foreach my $key (sort {$runs{$a} <=> $runs{$b}} keys %runs)
-{
-  print OUT "$key\t";
-  print OUT "$runs{$key}\t";
+  open(OUT,$outstream);
+  print OUT "#$infile:\n";
+  print OUT "#Run\t";
+  print OUT "Free Energy\t";
   print OUT "\n";
-}
-close(OUT);
+  foreach my $key (sort {$runs{$a} <=> $runs{$b}} keys %runs)
+  {
+    print OUT "$key\t";
+    print OUT "$runs{$key}\t";
+    print OUT "\n";
+  }
+  close(OUT);
+} # loop through dlg files
+
+
 warn "Done.\n";
 exit(0);
