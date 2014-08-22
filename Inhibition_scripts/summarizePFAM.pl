@@ -13,43 +13,61 @@ use SeqAnalysis;
 use Data::Dumper;
 
 #####-----Global Variables-----#####
-my $input;
+my ($infile,$all);
+my @files;
 my ($help,$verb);
 my $hmm_mode = "search";
-GetOptions ('i|input=s' => \$input,
+GetOptions ('i|input=s' => \$infile,
+            'a|all'     => \$all,
             'm|mode=s'  => \$hmm_mode,
             'h|help'   => \$help,
             'v|verbose' => \$verb);
-my $usage = "Usage: summarizePFAM.pl -i input [-m hmm_mode]\nOutput is STDOUT\n";
+my $usage = "Usage: summarizePFAM.pl -i input | -a [-m hmm_mode]\nOutput is STDOUT\n";
 die $usage if $help;
-die "No input.\n$usage" if (!$input);
+die "No input.\n$usage" if (!$infile && !$all);
 
 #####-----Main-----#####
-my ($hash_ref,$hits_ref) = hmmParse($input);
-my %hash = %{$hash_ref};
-my %hits = %{$hits_ref};
-#print Dumper \%hash;
-
-foreach my $key (sort keys %hash)
+if($all)
 {
-  print "$key\t";
-  my @pfids;
-  if($verb)
-  {
-    foreach my $id (sort keys %{$hash{$key}})
-    {
-      push(@pfids, join(";",$id,$hash{$key}{$id}{"Desc"}));
-    }
-  }
-  else
-  {
-    @pfids = sort keys %{$hash{$key}};
-  }
-  print join(",",@pfids),"\n";
+  opendir(DIR,".");
+  @files = grep {/\_tbl\.hmm/ } readdir(DIR);
+  closedir(DIR);
 }
-my $total = scalar keys %hits;
-print $total,"\n";
-print Dumper \%hits;
+else
+{
+  push @files,$infile;
+}
+
+foreach my $input (@files)
+{
+  my ($hash_ref,$hits_ref) = hmmParse($input);
+  my $in = (split(/[\-|\_]/,$input))[2];
+  my %hash = %{$hash_ref};
+  my %hits = %{$hits_ref};
+  #print Dumper \%hash;
+  open(my $oh,">","$in\_pfam.tsv");
+  foreach my $key (sort keys %hash)
+  {
+    print $oh "$key\t";
+    my @pfids;
+    if($verb)
+    {
+      foreach my $id (sort keys %{$hash{$key}})
+      {
+        push(@pfids, join(";",$id,$hash{$key}{$id}{"Desc"}));
+      }
+    }
+    else
+    {
+      @pfids = sort keys %{$hash{$key}};
+    }
+    print $oh join(",",@pfids),"\n";
+  }
+  my $total = scalar keys %hits;
+  warn $total,"\n";
+  #warn Dumper \%hits;
+}
+
 warn "Done.\n";
 exit(0);
 

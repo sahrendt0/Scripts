@@ -402,7 +402,7 @@ sub hmmParse
 #  $tmp = $filename[1]; # "vs"
 #  $mod = $filename[3]; # "tbl"
   my $ext = $filename[-1];
-  print $ext,"\n";
+  #warn $ext,"\n";
 #  if($ext =~ m/scan/)
 #  {
 #    @flags = (1,0,2,0);

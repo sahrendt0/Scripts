@@ -3,7 +3,8 @@
 # Description: Provide a sequence ID and a fasta flatfile (database) and the script will return the fasta-formatted sequence
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
-# Date: 12.26.13
+# Date: 8.13.14
+#       v1.5 : intelligent choice if multiple sequences in a file
 ################################
 use warnings;
 use strict;
@@ -12,24 +13,32 @@ use Bio::SeqIO;
 use Getopt::Long;
 
 my ($org,$seqID,$acc_file);
+my $multi;
 my ($help,$verb);
-my $dir = ".";
+my $dir = "/rhome/sahrendt/bigdata/Genomes/Protein";
 my %acc;
 
 GetOptions ('f|fasta=s'  => \$org,
             'd|dir=s'    => \$dir,
             'a|accnos=s' => \$acc_file,
             'i|id=s'     => \$seqID,
+            'm|multi'    => \$multi,
             'h|help'     => \$help,
             'v|verbose'  => \$verb     # verbose for file output
 );
 
-my $usage = "Usage: getseqfromfile.pl -f fastafile [-d dir] -i id | -a accnos_file\nOutput is STDOUT\n";
+my $usage = "Usage: getseqfromfile.pl -f fastafile [-d dir] -i id | -a accnos_file\nOutput is STDOUT\nUse -m if multiple sequences in accnos file; omit fastafile\n";
 die $usage if $help;
-die "No IDs provided.\n$usage" if (!$acc_file && !$seqID);
+die "No IDs provided.\n$usage" if (!$acc_file && !$seqID && !$multi);
 
-my $seqio_obj_in = Bio::SeqIO->new(-file => "$dir/$org",
-                                   -format => "fasta");
+#####-----Main-----#####
+my $seqio_obj_in;
+
+if(!$multi)
+{
+  $seqio_obj_in = Bio::SeqIO->new(-file => "$dir/$org",
+                                  -format => "fasta");
+}
 
 if($acc_file)
 {
@@ -38,21 +47,37 @@ if($acc_file)
   {
     next if ($line =~ /^#/);
     chomp $line;
-    $acc{$line}++;
+    my ($file,$etc) = split(/\|/,$line);
+    $acc{$file}{$line}++;
   }
   close(ACC);
 }
 else
 {
-  $acc{$seqID}++;
+  my $file = (split(/\|/,$org))[0];
+  $acc{$file}{$seqID}++;
 }
 
-while(my $seq = $seqio_obj_in->next_seq)
+foreach my $key (sort keys %acc)
 {
-  if(exists $acc{$seq->display_id})
+  if($multi)
   {
-    my $seqio_obj_out = Bio::SeqIO->new(-fh => \*STDOUT,
-                                        -format => "fasta");
-    $seqio_obj_out->write_seq($seq);
+    my $fastafile = "$dir/$key\_proteins.aa.fasta";
+    $seqio_obj_in = Bio::SeqIO->new(-file => $fastafile,
+                                    -format => "fasta");
+  }
+  while(my $seq = $seqio_obj_in->next_seq)
+  {
+    if(exists $acc{$key}{$seq->display_id})
+    {
+      my $seqio_obj_out = Bio::SeqIO->new(-fh => \*STDOUT,
+                                          -format => "fasta");
+      $seqio_obj_out->write_seq($seq);
+    }
   }
 }
+
+warn "Done\n";
+exit(0);
+
+#####-----Subroutines-----#####

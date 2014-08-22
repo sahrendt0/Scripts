@@ -24,12 +24,12 @@ die $usage if $help;
 die "No input.\n$usage" if (!$input);
 
 #####-----Main-----#####
-#my $input_db = Bio::SeqIO->new(-file => $input, 
-#                               -format => 'fasta');
+my $input_db = Bio::SeqIO->new(-file => $input, 
+                               -format => 'fasta');
 my $seq_no = 0;
 my $outdir = "$input\_files/";
 
-#system("mkdir $outdir");
+system("mkdir $outdir");
 my @tmp = split(/\./,$input);
 my $ext = pop @tmp;
 my $filename = join(".",@tmp);
