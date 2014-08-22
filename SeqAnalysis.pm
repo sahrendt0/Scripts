@@ -58,6 +58,7 @@ our @EXPORT = qw(seq2hash
                  indexFasta
                  printTaxonomy
                  hashPFAM
+                 %CODONS_1
 ); # export always
 
 our %CODONS_3 = ("MET" => ["ATG"],
