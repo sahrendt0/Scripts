@@ -40,7 +40,7 @@ while(my $seq=$in->next_seq)
   $qualOut->write_seq($seq);
 }
 
-warn "Done.\n"
+warn "Done.\n";
 exit(0);
 
 #####-----Subroutines-----#####
