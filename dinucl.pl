@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Script: dn.test
+# Script: dinucl.pl
 # Description: Calculates dinucleotide distribution for a given DNA string 
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
@@ -21,11 +21,12 @@ my ($help,$verb);
 GetOptions ('i|input=s' => \$input,
             'h|help'   => \$help,
             'v|verbose' => \$verb);
-my $usage = "Usage: dn.test -i input\n\n";
+my $usage = "Usage: dinucl.pl -i input\n\n";
 die $usage if $help;
 die "No input.\n$usage" if (!$input);
 
 #####-----Main-----#####
+my $species = (split(/\_/,$input))[0];
 my $seqio_obj = Bio::SeqIO->new(-file => "$input",
                                 -format => "fasta");
 my %master_hash;
@@ -37,21 +38,22 @@ while (my $seq_obj = $seqio_obj->next_seq)
     $master_hash{$key} += $tmp_hash{$key};
   }
 }
-open (my $fh,">","test.tsv");
+open (my $fh,">","$species\_diNuc.tsv");
 foreach my $key (sort keys %master_hash)
 {
-  print $fh "$key\t$dist{$key}\n";
+  print $fh "$key\t$master_hash{$key}\n";
 }
 close($fh);
 
-open(my $rh, ">", "test.R");
+open(my $rh, ">", "$species\_diNuc.R");
 print $rh "#!/usr/bin/R\n";
-print $rh "read.table(\"test.tsv\")\n";
-print $rh "test <- read.table(\"test.tsv\")\n";
-print $rh "barplot(test\$V2,names.arg=test\$V1)\n";
+print $rh "test <- read.table(\"$species\_diNuc.tsv\")\n";
+print $rh "pdf(\"$species\_diNucDist.pdf\")\n";
+print $rh "barplot(test\$V2,names.arg=test\$V1, cex.names=0.5)\n";
+print $rh "dev.off()\n";
 close($rh);
-system("chmod 744 test.R");
-system("Rscript test.R");
+system("chmod 744 $species\_diNuc.R");
+system("Rscript $species\_diNuc.R");
 warn "Done.\n";
 exit(0);
 

@@ -39,7 +39,7 @@ die $usage if ($help);
 die "No input.\n$usage" if (!$infile);
 
 ## Input processing
-print `perl -pi -e 's/\r/\n/g' $infile`;
+#print `perl -pi -e 's/\r/\n/g' $infile`;
 
 my $fastafile = Bio::SeqIO->new(-file=>"<$infile", 
                                 -format=>"fasta");

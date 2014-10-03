@@ -4,6 +4,7 @@
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
 # Date: 9.17.13
+#       9.18.14  : updated to ignore journal info (almost exactly 1 yr later...)
 #####################
 # Currently only focus on extracting GENES records from a KO entry file
 # *** THIS WOULD BE GOOD PRACTICE TO LEARN ABOUT OBJECT-ORIENTED PROGRAMMING IN PERL ***
@@ -33,6 +34,7 @@ my $p=0;
 foreach my $line (<IN>)
 {
   next if (($line !~ m/^GENES/) && (!$p));
+  next if (($line =~ /PMID/) || ($line =~ /AUTHORS/) || ($line =~ /TITLE/) || ($line =~ /JOURNAL/));
   if($line =~ m/^GENES/)
   {
     $p=1;
