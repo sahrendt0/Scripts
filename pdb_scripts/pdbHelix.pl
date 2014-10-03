@@ -25,7 +25,7 @@ GetOptions ('i|input=s' => \$input,
             'd|dir=s'   => \$dir);
 my $usage = "Usage: pbdHelix.pl -d -i input |-l list\n";
 die $usage if $help;
-#die $usage if (!$input or !$list);
+die $usage if (!$input and !$list);
 
 if($list)
 {
@@ -50,7 +50,7 @@ foreach my $file (@infiles)
   $filename = (split(/\//,$file))[-1];
   $filename = (split(/\./,$filename))[0];
   open(OUT,">$filename\_A\_helices.pdb");
-  my @helices = getHelices($PDB);
+  my @helices = getHelices($PDB);  # get a list of regions based on the HELIX rows
   chomp @helices;
   my @write_out;
   foreach my $hel (@helices)
