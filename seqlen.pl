@@ -52,7 +52,7 @@ while(my $seq = $fastafile->next_seq)
 {
   push(@lengths,$seq->length);
   if($verb){print OUT $seq->display_id,",",$seq->length,"\n";}
-  print $seq->display_id,",",$seq->length,"\n";
+  #print $seq->display_id,",",$seq->length,"\n";
 }
 if($verb){close(OUT);}
 
