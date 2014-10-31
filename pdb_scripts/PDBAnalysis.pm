@@ -16,6 +16,9 @@ package PDBAnalysis;
 #  [x] get experiment type	: getExp(obj PDB)
 #  [x] get specific atom	: getAtom(int atom_num)
 ########################
+# PDB file format is based on explicit spacing, not just tab-delimited
+#   Format documentation: http://www.wwpdb.org/documentation/format33/v3.3.html
+#############################################################################################################
 use strict;
 use warnings;
 use ParsePDB;

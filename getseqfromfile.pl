@@ -47,33 +47,24 @@ if($acc_file)
   {
     next if ($line =~ /^#/);
     chomp $line;
-    my ($file,$etc) = split(/\|/,$line);
-    $acc{$file}{$line}++;
+    #my ($file,$etc) = split(/\|/,$line);
+    $acc{$line}++;
   }
   close(ACC);
 }
 else
 {
-  my $file = (split(/\|/,$org))[0];
-  $acc{$file}{$seqID}++;
+  #my $file = (split(/\|/,$org))[0];
+  $acc{$seqID}++;
 }
 
-foreach my $key (sort keys %acc)
+while(my $seq = $seqio_obj_in->next_seq)
 {
-  if($multi)
+  if(exists $acc{$seq->display_id})    
   {
-    my $fastafile = "$dir/$key\_proteins.aa.fasta";
-    $seqio_obj_in = Bio::SeqIO->new(-file => $fastafile,
-                                    -format => "fasta");
-  }
-  while(my $seq = $seqio_obj_in->next_seq)
-  {
-    if(exists $acc{$key}{$seq->display_id})
-    {
-      my $seqio_obj_out = Bio::SeqIO->new(-fh => \*STDOUT,
-                                          -format => "fasta");
-      $seqio_obj_out->write_seq($seq);
-    }
+    my $seqio_obj_out = Bio::SeqIO->new(-fh => \*STDOUT,
+                                        -format => "fasta");     
+    $seqio_obj_out->write_seq($seq);
   }
 }
 

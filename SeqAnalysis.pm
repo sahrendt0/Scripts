@@ -8,7 +8,7 @@ package SeqAnalysis;
 # Functionality includes:
 #  [x] gc content               : getGC(str dna)
 #  [x] protein mass             : getProtMass(str prot)
-#  [ ] N50 
+#  [x] N50                      : N50(str filename)
 #  [x] hamming distance         : getHammDist(str dna1, str dna2)
 #  [x] reverse complement       : getRevComp(str dna)
 #  [x] transcribe to RNA        : transcribe(str dna)
@@ -61,6 +61,7 @@ our @EXPORT = qw(seq2hash
                  hashPFAM
                  %CODONS_1
                  diNucDist
+                 N50
 ); # export always
 
 our %CODONS_3 = ("MET" => ["ATG"],
@@ -193,6 +194,37 @@ our %AA = ("ATG" => "M",
            "TAA" => "*",
            "TAG" => "*");
 
+#####
+## Subroutine: N50
+#    Input: string filename
+#    Returns: N50 value
+########
+sub N50
+{
+  my $filename = shift @_;
+  my $verb = shift @_;
+  my $N50 = 0;
+  my @lengths;
+  my $sum = 0;
+  my $seqobj_io = Bio::SeqIO->new(-file => $filename,
+                                  -format => "fasta");
+  while(my $seq = $seqobj_io->next_seq)
+  {
+    push (@lengths,length($seq->seq));
+    $sum += length($seq->seq);
+  }
+
+  my $total=0;
+  print "$sum total bases\n" if($verb);
+  foreach my $size (sort {$b <=> $a} @lengths)
+  {
+    #print "$size\n";
+    $N50 = $size;
+    $total += $size;
+    last if ($total > ($sum/2));
+  }
+  return $N50;
+}
 
 #####
 ## Subroutine: diNucDist

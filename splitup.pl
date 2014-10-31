@@ -13,9 +13,11 @@ use Getopt::Long;
 
 #####-----Global Variables-----#####
 my $input;
+my $size = 1;
 my ($help,$verb);
 
 GetOptions ('i|input=s' => \$input,
+            's|size=s'  => \$size,
             'h|help'    => \$help,
             'v|verbose' => \$verb);
 
@@ -27,6 +29,7 @@ die "No input.\n$usage" if (!$input);
 my $input_db = Bio::SeqIO->new(-file => $input, 
                                -format => 'fasta');
 my $seq_no = 0;
+my $file_no = 0;
 my $outdir = "$input\_files/";
 
 system("mkdir $outdir");
@@ -36,12 +39,17 @@ my $filename = join(".",@tmp);
 
 while(my $seq_obj = $input_db->next_seq)
 {
-  my $ofilename = join(".",$filename,$seq_no,$ext);
+  my $ofilename = join(".",$filename,$file_no,$ext);
   $ofilename = join("",$outdir,$ofilename);
-  my $outfile = Bio::SeqIO->new(-file => ">$ofilename",
+  my $outfile = Bio::SeqIO->new(-file => ">>$ofilename",
                                 -format => 'fasta');
   $outfile->write_seq($seq_obj);
   $seq_no++;
+  if($seq_no >= $size)
+  {
+    $file_no++;
+    $size *= ($file_no+1);
+  }  
 }
 
 
