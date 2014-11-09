@@ -17,7 +17,7 @@ my $plot_script = "myPlot.R";
 my %colors = ( "CC" => "red",
                "MF" => "cornflowerblue",
                "BP" => "green");
-my $plotfile = "GOPlot.pdf";
+
 my $font_size = 1;
 my @width_height = (15,30);
 my $margins = "c(5,20,2,5)";  #bottom,left,top,right
@@ -36,6 +36,7 @@ die "No slim file.\n$usage" if (!$GOSlim);
 #####-----Main-----#####
 my $spec = (split(/\_/,$GOIDs))[0];  # Specides being queried
 my $slim_type = (split(/[\_\.]/,$GOSlim))[1];  # Slim type being used
+my $plotfile = "$spec\_$slim_type\_GOPlot.pdf";
 
 `rm $plot_script` if(-e $plot_script);  # clear out the file so we don't blindly append to it
 open(RSCRIPT,">>",$plot_script);
