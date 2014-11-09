@@ -84,7 +84,7 @@ sub drawPlot {
   print RSCRIPT "colors <- c(rep(\"$colors{$types[0]}\",length($types[0]\_sorted\$Count)),rep(\"$colors{$types[1]}\",length($types[1]\_sorted\$Count)),rep(\"$colors{$types[2]}\",length($types[2]\_sorted\$Count)))\n";
   print RSCRIPT "pdf(\"$plotfile\",width=$w,height=$h)\n";
   print RSCRIPT "par(mar=$margins)\n";   # set margins
-  print RSCRIPT "bplot <- barplot(width=0.8,ylim=c(0,ymax),xlim=c(0,4),data,horiz=TRUE,beside=FALSE,col=colors,yaxt=\"n\",main=\"$spec GO terms\",sub=\"Against $slim_type GOSlim\")\n";
+  print RSCRIPT "bplot <- barplot(width=0.8,ylim=c(0,ymax),xlim=c(0,4),data,horiz=TRUE,beside=FALSE,col=colors,yaxt=\"n\",main=\"$spec -vs- $slim_type\")\n";
   print RSCRIPT "axis(2,at=bplot,labels=left_labels,cex.axis=$font_size,las=2,tick=FALSE)\n";
   print RSCRIPT "axis(4,at=bplot,labels=right_labels,cex.axis=$font_size,las=2,tick=FALSE)\n";
   print RSCRIPT "dev.off()\n";
