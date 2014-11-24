@@ -12,6 +12,9 @@ use strict;
 use Getopt::Long;
 use lib '/rhome/sahrendt/Scripts';
 use SeqAnalysis;
+#use Bio::LITE::Taxonomy::NCBI::Gi2taxid qw/new_dict/;
+#use Bio::LITE::Taxonomy::NCBI;
+#use TokyoCabinet;
 
 ## For PFAM stuff
 use LWP::UserAgent;
@@ -19,16 +22,23 @@ use XML::LibXML;
 
 #####-----Global Variables-----#####
 my $input;	         # filename of ids to search
+my %gi2tax;
 my ($agent,$search);     # objects for http querying
 my $out_form = "xml";    # output format is xml for parsing
 my ($xml,$xml_parser);   # objects for xml parsing
 my $simple_tax;          # filename for a simplified taxonomy list, including NCBI taxIDs
 my ($help,$verb);
+my ($NCBI_TAX,$NCBI_TAXlite);
+my $ncbi = "ncbi";
+
+#my $gi2taxa_idx = '/scratch/gbacc/gi2taxon.tch';
+my $gi2taxon = '/rhome/sahrendt/bigdata/Data/Taxonomy/gi_taxid_prot.dmp.gz';
 
 GetOptions ('i|input=s' => \$input,
             'h|help'   => \$help,
-            'v|verbose' => \$verb);
-my $usage = "Usage: pfam2taxa.pl -i input\nGets taxonomy information for a PFAM protein id\n";
+            'v|verbose' => \$verb,
+            'm|mode=s'  => \$ncbi);
+my $usage = "Usage: pfam2taxa.pl -i input [-m pfam]\nGets taxonomy information for a PFAM protein id\n";
 die $usage if $help;
 die "No input.\n$usage" if (!$input);
 
@@ -36,23 +46,39 @@ die "No input.\n$usage" if (!$input);
 $agent = LWP::UserAgent->new;
 $agent->env_proxy;
 
+my $NC = initNCBI("flatfile");
 open(IN,"<",$input) or die "Can't open file $input: $!\n";
 while(my $id = <IN>)
 {
   chomp $id;
   print "$id\t";
-  my $pfam_id = parseId($id);  # turn what was in the file into a PFAM readable id
-  if($pfam_id)
+  my $pfam_id = parseId($id) if ($ncbi eq "pfam");  # turn what was in the file into a PFAM readable id
+  my $gi_id = getGI($id);
+
+  if($pfam_id || $gi_id)
   {
-    my $tax_id = getXMLInfo($pfam_id,"tax_id");
+    my $tax_id;
+    if($ncbi eq "pfam")
+    {
+      $tax_id = getXMLInfo($pfam_id,"tax_id");
+    }
+    else
+    {
+      $tax_id =  (split(/\t/, `zgrep -P \"\^$gi_id\\t\" $gi2taxon`))[1];
+      chomp $tax_id;
+    }
 #    my $simple_id = simpleId($tax_id);
 #    my $simple_id = simpleId(getXMLInfo($pfam_id,"tax_id"); 
-    print "$tax_id\n";
+    print "$tax_id\t";
+   # print getRank($tax_id,"species"),"\n";
+    #print shift (@{getRank($tax_id,"species")}),"\n";
+    #print getRank($tax_id,"phylum"),"\n";
+     getTaxonomybyID
 #    print "$simple_id\n";
   }
   else
   {
-    print "CF\n";
+    print "NA\tClat\n";
   }
   
 }
@@ -62,12 +88,50 @@ warn "Done.\n";
 exit(0);
 
 #####-----Subroutines-----#####
+sub getGI {
+  my $id = shift @_;
+  my @data = split(/\|/,$id);
+  if(scalar @data > 2)  # clat ids fail here
+  {
+    $id = $data[1]; #$NCBI_TAXlite->get_taxonomy_from_gi($data[1]);
+  }
+  return $id;
+}
+#
+#sub initNCBI {
+#  my $tax_dir = "/rhome/sahrendt/bigdata/Data/Taxonomy";
+#  my $nodesfile = "$tax_dir/nodes.dmp";
+#  my $namesfile = "$tax_dir/names.dmp";
+#  my $indexdir = "$tax_dir";
+#  my $dictfile = "$tax_dir/gi_taxid_prot.dmp";
+#  my $dictbin = "$tax_dir/gi_taxid_prot.bin";
+#  $NCBI_TAX = Bio::DB::Taxonomy->new(-source    => 'flatfile',
+#                                     -directory => $tax_dir,
+#                                     -namesfile => $namesfile,
+#                                     -nodesfile => $nodesfile);
+#}
+
 sub getRank {
   my $taxonid = shift @_;
-  my $rank = shift @_;
-  ## 1) set up TAx DB: local
-  ## 2) my $taxon = $db->get_taxon(-taxonid => $taxonid);
-  ## 3) my $rank = $curr_node->rank;
+  my $rankname = shift @_;
+  my $name = "no_phylum\t0";
+
+  if($taxonid != 0)
+  {
+    my $taxon = $NCBI_TAX->get_taxon(-taxonid => $taxonid);
+    while((my $rank = $taxon->rank) ne $rankname)
+    {
+#       $taxonid = $taxon->parent_id();
+      $taxon = $NCBI_TAX->get_taxon(-taxonid => $taxon->parent_id());
+      if (!defined($taxon))
+      {
+        $name = "no_phylum\t0";
+        last;
+      }
+      $name = join("\t",shift(@{$taxon->name("scientific")}),$taxon->id());
+    }
+  }
+  return $name;
 }
 
 #######
@@ -123,7 +187,6 @@ sub getXMLInfo {
   if($attribute eq "tax_id")
   {
     my ($taxonomy) = $entry->getChildrenByTagName("taxonomy");
-    print $taxonomy->content,"\n";
     $return_value = $taxonomy->getAttribute($attribute);
   }
   return $return_value;
