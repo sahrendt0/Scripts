@@ -1,0 +1,48 @@
+#!/usr/bin/perl
+# Script: colormap.pl
+# Description:  
+# Author: Steven Ahrendt
+# email: sahrendt0@gmail.com
+# Date: 11.13.2014
+##################################
+use warnings;
+use strict;
+use Getopt::Long;
+use lib '/rhome/sahrendt/Scripts';
+
+#####-----Global Variables-----#####
+my $input;
+my $colorfile = "colorlist";
+my %colors;
+my ($help,$verb);
+
+GetOptions ('i|input=s' => \$input,
+            'h|help'   => \$help,
+            'v|verbose' => \$verb);
+my $usage = "Usage: colormap.pl -i input\n\n";
+die $usage if $help;
+die "No input.\n$usage" if (!$input);
+
+#####-----Main-----#####
+open(COL,"<",$colorfile) or die "Can't open $colorfile\n";
+while(my $line = <COL>)
+{
+  chomp $line;
+  my ($val,$key) = split(/\t/,$line);
+  $colors{$key} = $val;
+}
+close(COL);
+
+open(IN, "<", $input) or die "Can't open $input: $!\n";
+while(my $line = <IN>)
+{
+  next if ($line =~ /^#/);
+  chomp $line;
+  my ($taxa,$order) = split(/\t/,$line);
+  print join("\t",$taxa,$order,$colors{$order}),"\n";
+}
+close(IN);
+warn "Done.\n";
+exit(0);
+
+#####-----Subroutines-----#####
