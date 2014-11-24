@@ -1,0 +1,6 @@
+cat strip-Hy.vmd 
+foreach i $argv { 
+  mol load pdb $i
+  set sel [atomselect top "not hydrogen"]
+  $sel writepdb $i.noH.pdb 
+} 
