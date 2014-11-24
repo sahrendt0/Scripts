@@ -9,7 +9,11 @@
 use warnings;
 use strict;
 use Getopt::Long;
+<<<<<<< HEAD
+use lib '/home/sahrendt0/Scripts/pdb_scripts/';
+=======
 use lib '/rhome/sahrendt/Scripts/pdb_scripts';
+>>>>>>> d4bfde3e6e816996a41078b0cde5823e6ad519d5
 use PDBAnalysis;
 
 #####-----Global Variables-----#####
