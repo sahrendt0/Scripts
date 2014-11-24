@@ -354,7 +354,7 @@ sub getTaxonomybyID
   else
   {
     warn "Failed: <$taxid>\n";
-    $tax_hash{$taxid}{"phylum"} = "no_rank";
+    $tax_hash{$taxid}{"order"} = "no_rank";
   }
   return \%tax_hash;
 }

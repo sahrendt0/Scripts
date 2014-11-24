@@ -12,6 +12,7 @@ use strict;
 use Getopt::Long;
 use lib '/rhome/sahrendt/Scripts';
 use SeqAnalysis;
+use General;
 #use Bio::LITE::Taxonomy::NCBI::Gi2taxid qw/new_dict/;
 #use Bio::LITE::Taxonomy::NCBI;
 #use TokyoCabinet;
@@ -30,6 +31,8 @@ my $simple_tax;          # filename for a simplified taxonomy list, including NC
 my ($help,$verb);
 my ($NCBI_TAX,$NCBI_TAXlite);
 my $ncbi = "ncbi";
+my $level = "order";  #tax level to use
+my @levels = qw(kingdom phylum class order family genus species);
 
 #my $gi2taxa_idx = '/scratch/gbacc/gi2taxon.tch';
 my $gi2taxon = '/rhome/sahrendt/bigdata/Data/Taxonomy/gi_taxid_prot.dmp.gz';
@@ -37,8 +40,9 @@ my $gi2taxon = '/rhome/sahrendt/bigdata/Data/Taxonomy/gi_taxid_prot.dmp.gz';
 GetOptions ('i|input=s' => \$input,
             'h|help'   => \$help,
             'v|verbose' => \$verb,
-            'm|mode=s'  => \$ncbi);
-my $usage = "Usage: pfam2taxa.pl -i input [-m pfam]\nGets taxonomy information for a PFAM protein id\n";
+            'm|mode=s'  => \$ncbi,
+            'level=s'  => \$level);
+my $usage = "Usage: pfam2taxa.pl -i input [-m pfam] [--level tax_level]\nGets taxonomy information for a PFAM protein id\n";
 die $usage if $help;
 die "No input.\n$usage" if (!$input);
 
@@ -54,10 +58,16 @@ while(my $id = <IN>)
   print "$id\t";
   my $pfam_id = parseId($id) if ($ncbi eq "pfam");  # turn what was in the file into a PFAM readable id
   my $gi_id = getGI($id);
-
+  my $tax_id;
+  if ($id =~ /^Clat/)  # Blastocladiales
+  {
+    $tax_id = 4508;  # Blastocladiales
+    $pfam_id = 0;
+    $gi_id = 0;
+  }
   if($pfam_id || $gi_id)
   {
-    my $tax_id;
+    #my $tax_id;
     if($ncbi eq "pfam")
     {
       $tax_id = getXMLInfo($pfam_id,"tax_id");
@@ -67,20 +77,27 @@ while(my $id = <IN>)
       $tax_id =  (split(/\t/, `zgrep -P \"\^$gi_id\\t\" $gi2taxon`))[1];
       chomp $tax_id;
     }
+  }
 #    my $simple_id = simpleId($tax_id);
 #    my $simple_id = simpleId(getXMLInfo($pfam_id,"tax_id"); 
-    print "$tax_id\t";
+  print "$tax_id\t";
    # print getRank($tax_id,"species"),"\n";
     #print shift (@{getRank($tax_id,"species")}),"\n";
     #print getRank($tax_id,"phylum"),"\n";
-     getTaxonomybyID
-#    print "$simple_id\n";
-  }
-  else
+  my $tax_hash = getTaxonomybyID($NC,$tax_id);
+  my $new_level = $level;
+  my $index = indexOf($new_level,\@levels);
+  while(!exists($tax_hash->{$tax_id}{$new_level}))
   {
-    print "NA\tClat\n";
+    $index = indexOf($new_level,\@levels);
+    $index--;
+    #print $index;
+    $new_level = $levels[$index];
+    #print $new_level,"\n";
   }
-  
+  print $tax_hash->{$tax_id}{$new_level};
+  print "{$new_level}" if ($new_level ne $level);
+  print "\n";
 }
 close(IN);
 
@@ -157,7 +174,8 @@ sub parseId {
   my @data = split(/[\_\/]/,$id);
   if(scalar @data > 1)  # clat ids will fail here
   {
-    $parsed_id = join("\_",$data[2],$data[3]);
+    #$parsed_id = join("\_",$data[2],$data[3]);
+    $parsed_id = join("\_",$data[0],$data[1]);
   }
   return $parsed_id;
 }
