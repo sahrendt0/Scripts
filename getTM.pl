@@ -17,7 +17,7 @@ my ($help,$verb);
 GetOptions ('i|input=s' => \$input,
             'h|help'   => \$help,
             'v|verbose' => \$verb);
-my $usage = "Usage: getTM.pl -i input\nParses the 6-9 TM sequences from a TMHMM results file\n";
+my $usage = "Usage: getTM.pl -i input\nParses the 6-9 TM sequences from a TMHMM results file\nCreates individual files for each architecture\n";
 die $usage if $help;
 die "No input.\n$usage" if (!$input);
 

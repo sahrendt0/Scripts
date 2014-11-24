@@ -22,7 +22,9 @@ package SeqAnalysis;
 #  [x] get sequences            : getSeqs(str fasta_filename, arrayref accnos)
 #  [x] seq to hash              : seq2hash(str seq)
 #  [x] hmmscan/search parse     : hmmParse(str filename)
-#  [x] get taxonomy for species : getTaxonomy(str genus_species)
+#  [x] initNCBI                 : initNCBI(str mode)
+#  [x] get taxonomy for species : getTaxonomybySpecies(str genus_species)
+#  [ ] get taxonomy for species : getTaxonomybyID(str taxid)
 #  [x] print taxonomy		: printTaxonomy(hash_ref taxonomy)
 #  [x] index fastafile          : indexFasta(str filename)
 #  [x] remove sequence		: removeSeq(str accno)
@@ -35,7 +37,7 @@ use Bio::Perl;
 use Bio::Seq;
 use Bio::SeqIO;
 use Bio::Taxon;
-#use Bio::DB::EUtilities;
+use Bio::DB::EUtilities;
 use Data::Dumper;
 use base 'Exporter';  # to export our subroutines
 
@@ -55,7 +57,9 @@ our @EXPORT = qw(seq2hash
                  getRevComp
                  transcribe 
                  hmmParse 
-                 getTaxonomy 
+                 getTaxonomybySpecies
+                 initNCBI
+                 getTaxonomybyID 
                  indexFasta
                  printTaxonomy
                  hashPFAM
@@ -287,19 +291,18 @@ sub indexFasta
 }
 
 #####
-## Subroutine: getTaxonomy
-#    Input: species name (string)
-#           mode of taxonomy db (string; "entrez" or "flatfile")
-#    Returns: hash of taxonomy names
+## Subroutine: initNCBI
+#    Input: mode of taxonomy db (string; "entrez" or "flatfile")
+#    Returns: Bio::DB::Taxonomy object
 #######
-sub getTaxonomy
+sub initNCBI
 {
-  my $species = shift @_;
+ # my $species = shift @_;
   my $mode = shift @_;
-  my $verb = shift @_;
-  print $species if $verb;
-  print "($mode)\n" if $verb;
-  my %tax_hash;
+ # my $verb = shift @_;
+ # print $species if $verb;
+ # print "($mode)\n" if $verb;
+  #my %tax_hash;
   my $NCBI_TAX;
   if($mode eq "flatfile")
   {
@@ -317,6 +320,55 @@ sub getTaxonomy
   {  
     $NCBI_TAX = Bio::DB::Taxonomy->new(-source => 'entrez');
   }
+  return $NCBI_TAX;
+}
+
+#####
+## Subroutine: getTaxonomybyID
+#    Input:
+#    Returns: hash of taxonomy
+#######
+sub getTaxonomybyID
+{
+  my $NCBI_TAX = shift @_; ## Bio::DB::Taxonomy object
+  my $taxid = shift @_;
+  my %tax_hash;
+  if(my $taxon = $NCBI_TAX->get_taxon(-taxonid => $taxid))
+  {
+    my $tree = $NCBI_TAX->get_tree($taxon->scientific_name);
+    my $root = $tree->get_root_node;
+    my $curr_node = $root;
+    while(my @nodes = $curr_node->each_Descendent)
+    {
+      $curr_node = $nodes[0];
+      my $id = $curr_node->id;
+      my $rank = $curr_node->rank;
+      my $name = $curr_node->scientific_name;
+#      my $factory = Bio::DB::EUtilities->new(-eutil => 'esummary',
+#                                             -db    => 'taxonomy',
+#                                             -id    => $id );
+#      my ($name) = $factory->next_DocSum->get_contents_by_name("ScientificName");
+      $tax_hash{$taxid}{$rank} = $name;
+    }
+  }
+  else
+  {
+    warn "Failed: <$taxid>\n";
+    $tax_hash{$taxid}{"phylum"} = "no_rank";
+  }
+  return \%tax_hash;
+}
+
+#####
+## Subroutine: getTaxonomybySpecies
+#    Input:
+#    Returns: hash of taxonomy
+#######
+sub getTaxonomybySpecies
+{
+  my $NCBI_TAX = shift @_; ## Bio::DB::Taxonomy object
+  my $species = shift @_;
+  my %tax_hash;
   if(my $taxonid = $NCBI_TAX->get_taxonid($species))
   {
     my $tree = $NCBI_TAX->get_tree($species);
@@ -346,16 +398,16 @@ sub getTaxonomy
     }
     my $genus = (split(/\s/,$species))[0];
     warn "Try again with <$genus>\n";
-    my $ret = getTaxonomy($genus,$mode,$verb);
+    my $ret = getTaxonomybySpecies($NCBI_TAX,$genus);
     return $ret;
   }
 }
 ##########
 ## Subroutine printTaxonomy
 #    Input: reference to taxonomy hash
-#           array of taxonomic ranks to use
+#           reference to array of taxonomic ranks to use
 #           name of specific species (leave blank to print all)
-#    Returns: none; prints to screen
+#    Returns: none; prints to STDOUT
 ################
 sub printTaxonomy
 {
@@ -424,6 +476,7 @@ sub printTaxonomy
     {
       warn "Errors with $name: data missing from critical taxonomic levels.\n";
       open(my $fh,">>", "Failed");
+      print "$acc\to__noRank\n";
       print $fh "$acc\n";
       close($fh);
     }

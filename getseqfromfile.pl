@@ -17,13 +17,14 @@ my $multi;
 my ($help,$verb);
 my $dir = "/rhome/sahrendt/bigdata/Genomes/Protein";
 my %acc;
-
+my $invert;
 GetOptions ('f|fasta=s'  => \$org,
             'd|dir=s'    => \$dir,
             'a|accnos=s' => \$acc_file,
             'i|id=s'     => \$seqID,
             'm|multi'    => \$multi,
             'h|help'     => \$help,
+            'invert'     => \$invert,
             'v|verbose'  => \$verb     # verbose for file output
 );
 
@@ -58,15 +59,28 @@ else
   $acc{$seqID}++;
 }
 
+my $printed = 0;
 while(my $seq = $seqio_obj_in->next_seq)
 {
-  if(exists $acc{$seq->display_id})    
+  my $print = 0;
+  if(exists $acc{$seq->display_id} && !$invert)    
+  {
+    $print = 1;
+  }
+  if($invert && !exists $acc{$seq->display_id})
+  {
+    $print = 1;
+  }
+  if($print)
   {
     my $seqio_obj_out = Bio::SeqIO->new(-fh => \*STDOUT,
                                         -format => "fasta");     
     $seqio_obj_out->write_seq($seq);
+    $printed++;
   }
 }
+
+warn "$printed/".scalar(keys %acc)." sequences written\n";
 
 warn "Done\n";
 exit(0);

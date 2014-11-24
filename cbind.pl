@@ -3,69 +3,58 @@
 # Description: Like cbind() in R 
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
-# Date: 01.31.2014
+# Date: 11.21.2014
 ##################################
-# For now, only 2 files
+# argument is comma-separated list of files
 ###########################
 use warnings;
 use strict;
 use Getopt::Long;
+use Data::Dumper;
 
 #####-----Global Variables-----#####
-my ($file1,$file2);
+my $files;
 my ($help,$verb);
 my %final;
 
-GetOptions ('1=s'      => \$file1,
-            '2=s'      => \$file2,
-            'h|help'   => \$help,
+GetOptions ('--input=s' => \$files,
+            'h|help'    => \$help,
             'v|verbose' => \$verb);
-my $usage = "Usage: cbind.pl -1 file2 -2 file2\n";
+my $usage = "Usage: cbind.pl --input file1,file2[,file3,file4,...]\n";
 die $usage if $help;
-die "No input.\n$usage" if ((!$file1) and (!$file2));
+die "No input.\n$usage" if (!$files);
 
 #####-----Main-----#####
-open(F1,"<$file1") or die "Can't open $file1: $!\n";
-open(F2,"<$file2") or die "Can't open $file2: $!\n";
+chomp $files;
+my @file_list = split(/,/,$files);
+for (my $i=0; $i < scalar (@file_list); $i++)
+{
+  open(FH,"<",$file_list[$i]) or die "Can't open $file_list[$i]: $!\n";
+  my @file_headers;
+  while(my $line = <FH>)
+  {
+    chomp $line;
+    my ($key,@vals) = split(/\t/,$line);
+    if ($line =~ /^Org/)
+    {
+      @file_headers = @vals;
+    }
+    else
+    {
+#      print Dumper \@file_headers;
+      $final{$key}{$i}{"Headers"} = join(",",@file_headers);
+      $final{$key}{$i}{"Data"} = join(",",@vals);
+    }
+  }
+  close(FH);
+}
 
-while(my $line = <F1>)
-{
-  chomp $line;
-  my ($key,$val) = split(/\t/,$line);
-  $final{$key}{'F1'} = $val;
-}
-while(my $line = <F2>)
-{
-  chomp $line;
-  my ($key,$val) = split(/\t/,$line);
-  $final{$key}{'F2'} = $val;
-}
-close(F1);
-close(F2);
+#print Dumper \%final;
+my $test = "Wseb";
+print $test,"\n";
+print Dumper $final{$test};
 
-print "PFID\t$file1\t$file2\n";
-foreach my $key (sort keys %final)
-{
-  print $key,"\t";
-  if(exists($final{$key}{'F1'}))
-  {
-    print $final{$key}{'F1'};
-  }
-  else
-  {
-    print 0;
-  }
-  print "\t";
-  if(exists($final{$key}{'F2'}))
-  {
-    print $final{$key}{'F2'};
-  }
-  else
-  {
-    print 0;
-  }
-  print "\n";
-}
+
 warn "Done.\n";
 exit(0);
 

@@ -18,7 +18,7 @@ my %colors = ( "CC" => "red",
                "MF" => "cornflowerblue",
                "BP" => "green");
 
-my $font_size = 1;
+my $font_size = 1.5;
 my @width_height = (15,30);
 my $margins = "c(5,20,2,5)";  #bottom,left,top,right
 my ($help,$view,$exec);
