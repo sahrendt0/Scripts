@@ -34,12 +34,13 @@ while(my $line = <COL>)
 close(COL);
 
 open(IN, "<", $input) or die "Can't open $input: $!\n";
+print "#Matching pattern\tKeyword\tForeground color\n";
 while(my $line = <IN>)
 {
   next if ($line =~ /^#/);
   chomp $line;
   my ($taxa,$order) = split(/\t/,$line);
-  print join("\t",$taxa,$order,$colors{$order}),"\n";
+  print join("\t","complete",$taxa,$colors{$order},$line_width),"\n";
 }
 close(IN);
 warn "Done.\n";
