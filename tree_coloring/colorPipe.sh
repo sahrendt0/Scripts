@@ -1,4 +1,4 @@
-##
+###
 # Description: Shell script to run though process of coloring trees for plotting 
 # Author: Steven Ahrendt (sahrendt0@gmail.com)
 # Date: 11.26.14
