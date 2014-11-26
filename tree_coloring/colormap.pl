@@ -68,8 +68,8 @@ sub writeConfigs {
     my ($taxa,$order) = split(/\t/,$line);
     my $FG_col = $colors{$order}{$mode};
     my $BG_col = "";
-    print OUT join("\t","complete",$taxa,$FG_col,$BG_col,$line_width),"\n" if ($mode eq "R");
-    print OUT join("\t",$taxa,$order,$FG_col),"\n" if ($mode eq "Dendro");
+    print OUT join("\t","complete",$taxa,$FG_col,$BG_col,$line_width),"\n" if ($mode eq "Dendro");
+    print OUT join("\t",$taxa,$order,$FG_col),"\n" if ($mode eq "R");
   }
   close(IN);
   close(OUT);
