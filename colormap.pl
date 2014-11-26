@@ -17,9 +17,10 @@ my %colors;
 my ($help,$verb);
 
 GetOptions ('i|input=s' => \$input,
+            'color=s'   => \$colorfile,
             'h|help'   => \$help,
             'v|verbose' => \$verb);
-my $usage = "Usage: colormap.pl -i input\n\n";
+my $usage = "Usage: colormap.pl -i input [--color]\n\n";
 die $usage if $help;
 die "No input.\n$usage" if (!$input);
 
