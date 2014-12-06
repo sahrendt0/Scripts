@@ -5,35 +5,49 @@
 # email: sahrendt0@gmail.com
 # Date: 6.23.11
 ####################
-# Usage: unalign.pl alignfile
-####################
-
 use strict;
 use Bio::Seq;
 use Bio::SeqIO;
+use Getopt::Long;
 
-my $infile = $ARGV[0];
-my @infilename = split(/\./,$infile);
-my $name = $infilename[0];
-print $name,"\n";
-if(scalar(@infilename) > 2)
-{
-  pop(@infilename);
-  $name = join(".",@infilename);
-  print $name,"\n";
-}
+#####-----Global Variables-----#####
+my $input;
+my ($help,$verb);
 
+GetOptions ('i|input=s' => \$input,
+            'h|help'    => \$help,
+            'v|verbose' => \$verb);
+my $usage = "unalign.pl -i alignfile\nUn-aligns a fasta-formatted alignment\n";
+die $usage if $help;
+die "No input.\n$usage" if (!$input);
 
-my $alignmentfile = new Bio::SeqIO(-file=>$infile, -format=>'fasta');
+#####-----Main-----#####
+my $name = getName($input);
 
+my $alignmentfile = new Bio::SeqIO(-file=>$input, 
+                                   -format=>'fasta');
 
 while (my $seq = $alignmentfile->next_seq)
 {   
-  #print $seq->seq(),"\n";
   my $dealseq = $seq->seq();
   $dealseq =~ s/-//g;
   $seq->seq($dealseq);
-  #print $seq->seq(),"\n";
-  my $dealignmentfile = new Bio::SeqIO(-file=>">>$name\_unal.fa", -format=>'fasta');
+  my $dealignmentfile = new Bio::SeqIO(-file=>">>$name\_unal.fa", 
+                                       -format=>'fasta');
   $dealignmentfile->write_seq($seq);
+}
+
+warn "Done.\n";
+exit(0);
+
+#####-----Subroutines-----#####
+sub getName {
+  my $in = shift @_;
+  my @infilename = split(/\./,$in);
+  my $name = $infilename[0];
+  if(scalar(@infilename) > 2)
+  {
+    pop(@infilename);
+    $name = join(".",@infilename);
+  }
 }
