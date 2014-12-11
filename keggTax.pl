@@ -18,43 +18,110 @@
 
 use warnings;
 use strict;
-use SOAP::Lite;
-use Bio::Seq;
-use Bio::SeqIO;
 use Getopt::Long;
+use lib '/rhome/sahrendt/Scripts/';
+use SeqAnalysis;
 
-#my $op = "get"; 
-my $arg;
-#my $output;
-#my $wsite = 'http://rest.kegg.jp';
-my $help;
-#my $serv = SOAP::Lite -> service($wsdl);
+#####-----Global Variables-----#####
+my $input;
+my ($help,$verb);
+my @ranks = @STD_TAX;
+my $user_ranks;
+my $NCBI_TAX = initNCBI("flatfile");
+my $BCMO1_accnos = "BCMO1.accnos";
+my $BCDO2_accnos = "BCDO2.accnos";
+my %genelist;
 
-GetOptions ("h|help"        => \$help,
-            "a|arg=s"       => \$arg,
-);
-my $usage = "Usage: kegg.pl -a argument\n";
+GetOptions ("i|input=s"     => \$input,
+            "ranks=s"       => \$user_ranks,
+            "v|verbose"     => \$verb,
+            "h|help"        => \$help);
+my $usage = "Usage: kegg.pl -i input\n";
 die $usage if($help);
 #$output = $arg;
 
-print kegg2tax($arg);
+#####-----Main-----#####
+## Get user ranks
+@ranks = split(/,/,$user_ranks) if ($user_ranks);
 
+## hash up genelist
+open(my $BC1, "<",$BCMO1_accnos) or die "Can't open $BCMO1_accnos: $!\n";
+while(my $line = <$BC1>)
+{
+  chomp $line;
+  $genelist{$line} = "BCMO1";
+}
+close($BC1);
+open(my $BC2, "<",$BCDO2_accnos) or die "Can't open $BCDO2_accnos: $!\n";
+while(my $line = <$BC2>)
+{
+  chomp $line;
+  $genelist{$line} = "BCDO2";
+}
+close($BC2);
+$genelist{"chy"} = "unk";
+
+## Open codefile
+open(my $code_h,"<",$input) or die "Can't open $input: $!\n";
+while (my $line = <$code_h>)
+{
+  chomp $line; 
+  my $taxid = isChytrid($line);
+  my $gene_name = "chy";
+  if(!$taxid)
+  {
+    $gene_name = (split(/\t/,$line))[0];
+    $gene_name =~ s/_/:/;
+    my $keggGN = (split(/:/,$gene_name))[0];
+    $taxid = kegg2tax($keggGN);
+  }
+  my $taxHash = getTaxonomybyID($NCBI_TAX,$taxid);
+  print "$line\t$genelist{$gene_name}\t";
+  printTaxonomy($taxHash,\@ranks,"",$taxid);
+}
+close($code_h);
 warn "Done.\n";
 exit(0);
 
 #####-----Subroutines-----#####
+sub isChytrid {
+  my $id = shift @_;
+  my $taxid = 0;
+  if($id =~ /SPPG/i)
+  {
+    $taxid = 645134; # Spun
+  }
+  elsif($id =~ /CANG/i) 
+  {
+    $taxid = 765915; # Cang
+  }
+  elsif($id =~ /AMAG/i)
+  {
+    $taxid = 578462; # Amac
+  }
+  elsif($id =~ /Clat/i)
+  {
+    $taxid = 945690;  # Clat
+  }
+  elsif($id =~ /Bden/i)
+  {
+    $taxid = 403673; # Bden 423
+  }
+  return $taxid;
+}
+
 sub kegg2tax {
   my $orgID = shift @_;
   my $taxID;
-  `wget -O $orgID http://rest.kegg.jp/get/gn:$orgID`;
-  open(IN, "<", $orgID);
-  while(my $line = <IN>)
+  `wget -q -O $orgID http://rest.kegg.jp/get/gn:$orgID` if (!(-e $orgID));
+  open(my $fh, "<", $orgID) or die "Can't open $orgID: $!\n";
+  while(my $line = <$fh>)
   {
     chomp $line;
     next if ($line !~ /^TAX/);
-    $taxID = (split(/[\s+\:]/,$line))[2];
+    $taxID = (split(/:/,$line))[1];
   }
-  close(IN);
+  close($fh);
   #`rm $orgID`;
   return $taxID;
 }
