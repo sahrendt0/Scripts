@@ -21,6 +21,7 @@ use strict;
 use Getopt::Long;
 use lib '/rhome/sahrendt/Scripts/';
 use SeqAnalysis;
+use Data::Dumper;
 
 #####-----Global Variables-----#####
 my $input;
@@ -28,9 +29,12 @@ my ($help,$verb);
 my @ranks = @STD_TAX;
 my $user_ranks;
 my $NCBI_TAX = initNCBI("flatfile");
+my $LOCAL_TAX = taxonList(); # local hash reference for genomes on biocluster
+#print Dumper $LOCAL_TAX;
 my $BCMO1_accnos = "BCMO1.accnos";
 my $BCDO2_accnos = "BCDO2.accnos";
 my %genelist;
+my $kegg_local = "/rhome/sahrendt/bigdata/Data/KEGG";
 
 GetOptions ("i|input=s"     => \$input,
             "ranks=s"       => \$user_ranks,
@@ -59,15 +63,19 @@ while(my $line = <$BC2>)
   $genelist{$line} = "BCDO2";
 }
 close($BC2);
-$genelist{"chy"} = "unk";
-
+$genelist{"unk"} = "unk";
 ## Open codefile
 open(my $code_h,"<",$input) or die "Can't open $input: $!\n";
 while (my $line = <$code_h>)
 {
   chomp $line; 
-  my $taxid = isChytrid($line);
-  my $gene_name = "chy";
+  my $taxid;
+  if($line =~ /\w{4}\|/)
+  {
+    my $localID = (split(/\|/,$line))[0];
+    $taxid = $LOCAL_TAX->{lc($localID)}{"TaxID"};
+  }
+  my $gene_name = "unk";
   if(!$taxid)
   {
     $gene_name = (split(/\t/,$line))[0];
@@ -113,8 +121,15 @@ sub isChytrid {
 sub kegg2tax {
   my $orgID = shift @_;
   my $taxID;
-  `wget -q -O $orgID http://rest.kegg.jp/get/gn:$orgID` if (!(-e $orgID));
-  open(my $fh, "<", $orgID) or die "Can't open $orgID: $!\n";
+  opendir(DIR,$kegg_local);
+  my %local_db = map {$_ => 1} grep {/\w{3}/} readdir(DIR);
+  closedir(DIR);
+  if(!exists $local_db{$orgID})
+  {
+    warn "$orgID not found locally" if ($verb);
+    `wget -q -O $kegg_local/$orgID http://rest.kegg.jp/get/gn:$orgID` if (!(-e $orgID));
+  }
+  open(my $fh, "<", "$kegg_local/$orgID") or die "Can't open $orgID: $!\n";
   while(my $line = <$fh>)
   {
     chomp $line;
