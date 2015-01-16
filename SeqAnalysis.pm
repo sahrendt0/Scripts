@@ -66,6 +66,9 @@ our @EXPORT = qw(seq2hash
                  %CODONS_1
                  diNucDist
                  N50
+                 @STD_TAX
+                 getTaxIDbySpecies
+                 taxonList
 ); # export always
 
 our %CODONS_3 = ("MET" => ["ATG"],
@@ -197,6 +200,45 @@ our %AA = ("ATG" => "M",
            "TGA" => "*",
            "TAA" => "*",
            "TAG" => "*");
+
+our @STD_TAX = qw(kingdom phylum class order family genus species);
+
+#####
+## Subroutine: taxonList
+#    Input: none
+#    Returns: ref to data in hash format
+########
+sub taxonList
+{
+  my $list_file = "/rhome/sahrendt/bigdata/Genomes/taxonlistID";
+  my %data_hash;
+
+  open(my $fh,"<",$list_file) or die "Can't open $list_file: $!\n";
+  my @keys;
+  while(my $line = <$fh>)
+  {
+    next if(($line =~ /^#\w/) || ($line =~ /^##/) || ($line =~ /^#@/));
+    chomp $line;
+    my @data = split(/\t/,$line);
+    my $id = shift @data;
+    if($line =~ /^#\$/)
+    {
+      @keys = @data;
+    }
+    else
+    {
+      for(my $i=0; $i<scalar(@data); $i++)
+      {
+        $data_hash{lc($id)}{$keys[$i]} = $data[$i];
+      }
+    }
+  }
+  close($fh);
+
+  return \%data_hash;
+  
+}
+
 
 #####
 ## Subroutine: N50
@@ -358,6 +400,22 @@ sub getTaxonomybyID
   }
   return \%tax_hash;
 }
+#####
+## Subroutine: getTaxIDbySpecies
+#    Input:
+#    Returns:
+#######
+sub getTaxIDbySpecies
+{
+  my $NCBI_TAX = shift @_;
+  my $species = shift @_;
+  my $taxonid = $NCBI_TAX->get_taxonid($species);
+  if(!$taxonid)
+  {
+    $taxonid = "---";
+  }
+  return $taxonid;
+}
 
 #####
 ## Subroutine: getTaxonomybySpecies
@@ -417,7 +475,7 @@ sub printTaxonomy
   my $spec = shift @_;
   my $acc = shift @_;
   my @species;
-  my $nr = 0; # counter for levels w/ no rank
+  my @nr; # for levels w/ no rank
   my $str_to_print = "$acc\t";  # final formatted string to print if all checks are met
   if($spec eq "")
   {
@@ -449,16 +507,16 @@ sub printTaxonomy
         {
           #print "no_rank";
           warn "$name has no_rank at $rank\n";
-          $nr++;
+          push @nr,$rank;
           my @fuzzy_ranks = grep {/$rank/} keys %{$tax_hash{$name}};
           if(scalar(@fuzzy_ranks) > 0) 
           {
             warn "possible alternatives: @fuzzy_ranks\n";
             if(scalar(@fuzzy_ranks) == 1)
             {
-              warn "using $fuzzy_ranks[0]";
+              warn "using $fuzzy_ranks[0] for $name\n";
               $str_to_print .= "$tax_hash{$name}{$fuzzy_ranks[0]}";
-              $nr--;
+              pop @nr;
             }
           }
           else
@@ -472,19 +530,17 @@ sub printTaxonomy
       }
       $str_to_print .= ";" if($rc != (scalar(@ranks)-1));
     }
-    if($nr > 0)
+    if(scalar(@nr) > 0)
     {
-      warn "Errors with $name: data missing from critical taxonomic levels.\n";
+      warn "Errors with $name: data missing from taxonomic levels: ",join(",",@nr),"\n";
       open(my $fh,">>", "Failed");
-      print "$acc\to__noRank\n";
+      #print "$acc\to__noRank\n";
       print $fh "$acc\n";
       close($fh);
     }
-    else
-    {
-      print "$str_to_print\n";
-    }
+    print "$str_to_print\n";
   }
+  return $str_to_print;
 }
 
 #####
