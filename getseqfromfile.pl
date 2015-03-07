@@ -56,7 +56,11 @@ if($acc_file)
 else
 {
   #my $file = (split(/\|/,$org))[0];
-  $acc{$seqID}++;
+  my @IDS = split(/,/,$seqID);
+  foreach my $ID (@IDS)
+  {
+    $acc{$ID}++;
+  }
 }
 
 my $printed = 0;

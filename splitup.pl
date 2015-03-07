@@ -21,15 +21,15 @@ GetOptions ('i|input=s' => \$input,
             'h|help'    => \$help,
             'v|verbose' => \$verb);
 
-my $usage = "Usage: splitup.pl -i fastafile\nOutput to directory containing files\n";
+my $usage = "Usage: splitup.pl -i fastafile [-s size]\nOutput to directory containing files\n";
 die $usage if $help;
 die "No input.\n$usage" if (!$input);
 
 #####-----Main-----#####
 my $input_db = Bio::SeqIO->new(-file => $input, 
                                -format => 'fasta');
-my $seq_no = 0;
-my $file_no = 0;
+my $seq_no = 0;  # counter for number of seqs written to a specific file
+my $file_no = 0; # counter for file being written to
 my $outdir = "$input\_files/";
 
 system("mkdir $outdir");
@@ -48,7 +48,7 @@ while(my $seq_obj = $input_db->next_seq)
   if($seq_no >= $size)
   {
     $file_no++;
-    $size *= ($file_no+1);
+    $seq_no = 0;
   }  
 }
 

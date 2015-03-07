@@ -40,6 +40,7 @@ opendir(DIR,$gdir);
 my @prots = grep {/\.fasta$/} readdir(DIR);
 closedir(DIR);
 
+if($align){$abbr .= "aln";}
 open(OUT,">$abbr\_ssearch.sh");
 if(($fasta_file) && ($abbr))
 {

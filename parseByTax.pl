@@ -18,10 +18,12 @@ my $sort;
 my @master = rankMaster();
 my @orgs = qw(Amac Bden Cang Clat Gpro Hpol OrpC PirE Rall Spun Ncra);
 my $other_tax; # additional taxa to add to @orgs
-my $fullName;
+my $fullName;  # displays full organism name in output (default is abbreviation)
+my $selection; # user-provided subset of gene names (default is all)
 
 GetOptions ('i|input=s' => \$input,
             'other=s' => \$other_tax,
+            'select=s' =>\$selection,
             'fullName' => \$fullName,
             'h|help'   => \$help,
             'sort'     => \$sort,
@@ -53,6 +55,13 @@ while (my $line = <$fh>)
 }
 close($fh);
 
+if ($selection)
+{
+  my @new_gene_names = split(/,/,$selection);
+  @gene_names = @new_gene_names;
+  unshift (@gene_names,"Org");
+}
+#print join("-",@gene_names),"\n";
 #print Dumper \%out_table;
 
 my $master_rank = $master[1];  # hash ref
@@ -86,7 +95,14 @@ foreach my $org (sort {indexOf($master_rank->{$a}{"Group"},$master_order) <=> in
   }
   foreach my $gene (@gene_names)
   {
-    print $out_table{$org}{$gene},"\t";
+    if(exists $out_table{$org})
+    {
+      print $out_table{$org}{$gene},"\t";
+    }
+    else
+    {
+      print "--\t";
+    }
   }
   print "\n";
 }

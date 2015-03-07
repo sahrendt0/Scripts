@@ -27,12 +27,26 @@ die $usage if $help;
 die "No input.\n$usage" if (!$input);
 
 #####-----Main-----#####
-$hash_ref->{$input} = getTaxonomy($input,$db_form,$verb);
-if($hash_ref->{$input}{"kingdom"} eq "NULL")
+my $NCBI_TAX = initNCBI($db_form);
+open(my $fh,"<",$input);
+while(my $line = <$fh>)
 {
-  print Dumper $hash_ref if $verb;
+  if($line =~ /^#/)
+  {
+    print $line;
+    next;
+  }
+  chomp $line;
+  my($abb,$c1,$c2,$spec,$ver,$web) = split(/\t/,$line);
+  my @data = split(/ /,$spec);
+  my $newSpec = join(" ",$data[0],$data[1]);
+  #$hash_ref->{$input} = getTaxonomy($NCBI_TAX,$input,$db_form,$verb);
+  #print "\"$spec\": ".getTaxIDbySpecies($NCBI_TAX,$spec)."\n";
+  my $taxID = getTaxIDbySpecies($NCBI_TAX,$newSpec);
+  print join("\t",$abb,$c1,$c2,$taxID,$spec,$ver,$web),"\n";
 }
-printTaxonomy($hash_ref,\@ranks,$input);
+close($fh);
+
 warn "Done.\n";
 exit(0);
 

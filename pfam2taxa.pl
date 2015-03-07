@@ -31,8 +31,18 @@ my $simple_tax;          # filename for a simplified taxonomy list, including NC
 my ($help,$verb);
 my ($NCBI_TAX,$NCBI_TAXlite);
 my $ncbi = "ncbi";
-my $level = "order";  #tax level to use
+my $level; # = "order";  #tax level to use
 my @levels = qw(kingdom phylum class order family genus species);
+my $TAXONLIST = taxonList();
+ 
+my %SPmap = ( "G9NKU3" => 452589,
+              "B2ANZ6" => 515849,
+              "Q2H7E7" => 306901,
+              "G2RAF9" => 578455,
+              "G2QCB5" => 573729,
+              "B0D621" => 486041,
+              "B0DLK5" => 486041,
+              "B0CTM6" => 486041);
 
 #my $gi2taxa_idx = '/scratch/gbacc/gi2taxon.tch';
 my $gi2taxon = '/rhome/sahrendt/bigdata/Data/Taxonomy/gi_taxid_prot.dmp.gz';
@@ -50,20 +60,40 @@ die "No input.\n$usage" if (!$input);
 $agent = LWP::UserAgent->new;
 $agent->env_proxy;
 
+if($level)
+{
+  @levels = ();
+  push @levels,$level;
+}
+
 my $NC = initNCBI("flatfile");
 open(IN,"<",$input) or die "Can't open file $input: $!\n";
 while(my $id = <IN>)
 {
   chomp $id;
+  my ($pfam_id,$gi_id,$tax_id);
   print "$id\t";
-  my $pfam_id = parseId($id) if ($ncbi eq "pfam");  # turn what was in the file into a PFAM readable id
-  my $gi_id = getGI($id);
-  my $tax_id;
-  if ($id =~ /^Clat/)  # Blastocladiales
+  my $localID = (split(/\|/,$id))[0];
+  $localID = lc($localID);
+#  print $localID,"\n";
+  if(exists $TAXONLIST->{$localID})
   {
-    $tax_id = 4508;  # Blastocladiales
+    $tax_id = $TAXONLIST->{$localID}{TaxID};
     $pfam_id = 0;
     $gi_id = 0;
+  }
+  elsif ($id =~ /^\w{6}\/\d+-\d+$/)
+  {
+    my $tmp = (split(/\//,$id))[0];
+    $tax_id = $SPmap{$tmp};
+    $pfam_id = 0;
+    $gi_id = 0;
+  }
+  else
+  {
+    $pfam_id = parseId($id) if ($ncbi eq "pfam");  # turn what was in the file into a PFAM readable id
+    $gi_id = getGI($id);
+    $tax_id = 0;
   }
   if($pfam_id || $gi_id)
   {
@@ -80,24 +110,25 @@ while(my $id = <IN>)
   }
 #    my $simple_id = simpleId($tax_id);
 #    my $simple_id = simpleId(getXMLInfo($pfam_id,"tax_id"); 
-  print "$tax_id\t";
+  #print "$tax_id\t";
    # print getRank($tax_id,"species"),"\n";
     #print shift (@{getRank($tax_id,"species")}),"\n";
     #print getRank($tax_id,"phylum"),"\n";
   my $tax_hash = getTaxonomybyID($NC,$tax_id);
-  my $new_level = $level;
-  my $index = indexOf($new_level,\@levels);
-  while(!exists($tax_hash->{$tax_id}{$new_level}))
-  {
-    $index = indexOf($new_level,\@levels);
-    $index--;
-    #print $index;
-    $new_level = $levels[$index];
-    #print $new_level,"\n";
-  }
-  print $tax_hash->{$tax_id}{$new_level};
-  print "{$new_level}" if ($new_level ne $level);
-  print "\n";
+  printTaxonomy($tax_hash,\@levels,"",$tax_id);
+#  my $new_level = $level;
+#  my $index = indexOf($new_level,\@levels);
+#  while(!exists($tax_hash->{$tax_id}{$new_level}))
+#  {
+#    $index = indexOf($new_level,\@levels);
+#    $index--;
+#    #print $index;
+#    $new_level = $levels[$index];
+#    #print $new_level,"\n";
+#  }
+#  print $tax_hash->{$tax_id}{$new_level};
+#  print "{$new_level}" if ($new_level ne $level);
+#  print "\n";
 }
 close(IN);
 

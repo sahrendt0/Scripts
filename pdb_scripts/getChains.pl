@@ -17,6 +17,7 @@
 #################################
 
 use strict;
+use lib '/rhome/sahrendt/Scripts/pdb_scripts';
 use ParsePDB;
 use Getopt::Long;
 

@@ -30,6 +30,7 @@ package SeqAnalysis;
 #  [x] remove sequence		: removeSeq(str accno)
 #  [x] hash PFAM		: hashPFAM(str filename)
 #  [ ] dinucleotide		: diNucDist(str sequence)
+#  [ ] kegg2tax                 : kegg2tax(str keggStr)
 ########################
 use strict;
 use warnings;
@@ -69,6 +70,7 @@ our @EXPORT = qw(seq2hash
                  @STD_TAX
                  getTaxIDbySpecies
                  taxonList
+                 kegg2tax
 ); # export always
 
 our %CODONS_3 = ("MET" => ["ATG"],
@@ -202,11 +204,41 @@ our %AA = ("ATG" => "M",
            "TAG" => "*");
 
 our @STD_TAX = qw(kingdom phylum class order family genus species);
+our %PATHS = ( "kegg_local" => "/rhome/sahrendt/bigdata/Data/KEGG");
+
+#######
+## Subroutine: kegg2tax
+#######
+sub kegg2tax {
+  my $kegg_local = $PATHS{"kegg_local"};
+  my $orgID = shift @_;
+  my $taxID;
+  opendir(DIR,$kegg_local);
+  my %local_db = map {$_ => 1} grep {/\w{3}/} readdir(DIR);
+  closedir(DIR);
+  if(!exists $local_db{$orgID})
+  {
+    warn "$orgID not found locally";
+    `wget -q -O $kegg_local/$orgID http://rest.kegg.jp/get/gn:$orgID` if (!(-e $orgID));
+  }
+  open(my $fh, "<", "$kegg_local/$orgID") or die "Can't open $orgID: $!\n";
+  while(my $line = <$fh>)
+  {
+    chomp $line;
+    next if ($line !~ /^TAX/);
+    $taxID = (split(/:/,$line))[1];
+  }
+  close($fh);
+  #`rm $orgID`;
+  return $taxID;
+}
 
 #####
 ## Subroutine: taxonList
 #    Input: none
 #    Returns: ref to data in hash format
+########
+# Keys: Abb, Class2, Class1, TaxID, FullName, Version, Website
 ########
 sub taxonList
 {
@@ -318,6 +350,7 @@ sub hashPFAM
 ## Subroutine: indexFasta
 #    Input: fasta filename (string)
 #    Returns: hash of fasta file
+#              display_id => Bio::Seq obj
 #######
 sub indexFasta
 {

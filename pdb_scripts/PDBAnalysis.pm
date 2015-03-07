@@ -25,7 +25,38 @@ use ParsePDB;
 use LWP::Simple;
 use base 'Exporter';  # to export our subroutines
 
-our @EXPORT = qw(getAtom parseAtom parseHelix printHelics getHelices extractFrag writeChain getExp); # export always
+our @EXPORT = qw(getAtom 
+                 parseAtom 
+                 parseHelix 
+                 printHelics 
+                 getHelices 
+                 extractFrag 
+                 writeChain 
+                 getExp
+                 getSeqFromFile
+); # export always
+
+##################
+## subroutine: getSeqFromFile
+#       Input: filename for pdb file
+#     Returns: Bio::Seq object 
+#############
+sub getSeqFromFile
+{
+  my $filename = shift @_;
+  my $PDB = ParsePDB->new(FileName => $filename);
+  my @fasta = $PDB->GetFASTA (Model => 0);
+  chomp @fasta;
+  #print join("\n",@fasta),"\n";
+  my $header = shift @fasta;
+  $header =~ s/^>//;  # The GetFASTA method adds the > symbol
+                      # But so does bio::Seq, so remove it here
+  my $sequence = join("",@fasta);
+  #print $header,"\n",$sequence,"\n";
+  my $seq_obj = Bio::Seq->new(-display_id => $header,
+                              -seq => $sequence);
+  return $seq_obj;
+}
 
 #####
 # getAtom

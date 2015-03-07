@@ -31,6 +31,7 @@ while (my $seq = $alignmentfile->next_seq)
 {   
   my $dealseq = $seq->seq();
   $dealseq =~ s/-//g;
+  $dealseq =~ s/\.//g;
   $seq->seq($dealseq);
   my $dealignmentfile = new Bio::SeqIO(-file=>">>$name\_unal.fa", 
                                        -format=>'fasta');

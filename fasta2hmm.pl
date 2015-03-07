@@ -40,7 +40,7 @@ my $tc_in = $fasta;
 if($shell)
 {
   open(SH,">fas2hmm.sh");
-  print SH "cd ",cwd(),"\n";
+  print SH "module load usearch\n";
   if($clust)
   {
     $tc_in = "$fasta_name\.cluster";

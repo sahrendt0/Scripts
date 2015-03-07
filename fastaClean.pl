@@ -34,22 +34,27 @@ my $seq_out = Bio::SeqIO->new(-file => ">$input\.clean",
                               -format => "fasta");
 while(my $seq_obj = $seq_in->next_seq)
 {
-  #print $seq_obj->display_id," => ";
-  my @old_id = split(/\|/,$seq_obj->display_id);
-  my $tmp = $old_id[1];
+  #print $seq_obj->display_id," => \n";
+  #my @old_id = split(/\|/,$seq_obj->display_id);
+  #my $tmp = $old_id[1];
   #my $num = (split(/\./,$tmp))[1];
-  my $num = $old_id[2];
+  #my $num = $old_id[3];
   #$tmp =~ s/\s+$//;
   #$old_id[1] =~ s/\_1//;
-  my $ni = join("_",$tmp,$num);
+#  my $org = "Mani";
+  #my $ni = $num; #join("_",$tmp,$num);
+  my $ni = $seq_obj->display_id;
+  #$ni = (split(/:/,$ni))[1];
   my $new_id = join("|",$org,$ni);
   #print $new_id;
   #print "\n";
-  $seqs{$new_id} = Bio::Seq->new(-display_id => $new_id,
-                                    -seq => $seq_obj->seq);
+  my $new_seq = $seq_obj->seq;
+  $new_seq =~ s/\*//;
+  my $newSeq_obj = Bio::Seq->new(-display_id => $new_id,
+                                 -seq => $new_seq);
+  $seq_out->write_seq($newSeq_obj);
 }
 
-foreach my $id (sort {$a cmp $b} keys %seqs){  $seq_out->write_seq($seqs{$id});}
 print `mv $input\.clean $input` if ($replace);
 warn "Done.\n";
 exit(0);

@@ -20,9 +20,11 @@ use Bio::SeqIO;
 use Getopt::Long;
 use BCModules;
 use SeqAnalysis;
+use Data::Dumper;
 
 ## Structures, variables, etc.
-my (%peps, %taxa, @genes);
+my (%peps, @genes);
+my %total_hits; # final data structure for ssearch summary
 my $gen_dir = "/rhome/sahrendt/bigdata/Genomes";
 my $pep_dir = "$gen_dir/Protein";
 my @result_list; # list of ssearch files
@@ -64,7 +66,7 @@ if($single_ssearch)
 else
 {
   opendir(DIR,$ssearch_dir);
-  @result_list = grep {/\.SSEARCH/i} readdir(DIR);
+  @result_list = grep {/\.SSEARCH$/i} readdir(DIR);
   closedir(DIR);
   if(scalar @result_list == 0)
   {
@@ -79,54 +81,28 @@ else
 ############
 if($inprot)
 {
-#  push @proteomes,$inprot;
   %peps = indexFasta($inprot);
 }
 else
 {
   %peps = indexProteomes;
-#  opendir(PEP,"$pep_dir");
-#  @proteomes = grep{ /\.fasta$/ } readdir(PEP);
-#  closedir(PEP);
 }
-
-#foreach my $prot (@proteomes)
-#{
-#  if($verbose){print $prot,"\n";}
-#  my $spec = (split(/\_/,$prot))[0];
-#  $spec = substr($spec,0,4);
-#  print $spec,"\n";
-#  %peps = indexProteomes;
-
-#  my $seqio_obj = Bio::SeqIO->new(-file => "$pep_dir/$prot",
-#                                  -format => 'fasta');
-#  while(my $seq = $seqio_obj->next_seq)
-#  {
-#    my $trunc_id = $seq->display_id;
-#    if(length($trunc_id) > 50)
-#    {
-#      $trunc_id = substr($trunc_id,0,50);
-#    }
-#    $peps{$spec}{$trunc_id} = $seq;
-#  }
-#}
 
 ###########
 ## 2. Hash of organisms
 ###########
-open(TX,"<$taxonlist_file") or die "Can't find $taxonlist_file..\n";
-foreach my $line (<TX>)
-{
-  next if $line =~ m/^#/;
-  chomp $line;
-  my ($ID,$type,$name) = split(/\t/,$line);
-  #$ID = substr($ID,0,4);
-  my @info = ($type,$name);
-  $taxa{$ID} = \@info;
-#  print "<$ID><$type><$name>\n";
-}
-#foreach my $key (keys %taxa){  print "$key = ",$taxa{$key}[0],"\n"}
-close(TX);
+%total_hits = %{taxonList()};
+
+#open(TX,"<$taxonlist_file") or die "Can't find $taxonlist_file..\n";
+#foreach my $line (<TX>)
+#{
+#  next if $line =~ m/^#/;
+#  chomp $line;
+#  my ($ID,$cl2,$cl1,$name,$info) = split(/\t/,$line);
+#  $total_hits{$ID}{"Class"} = $cl2;
+#  $total_hits{$ID}{"Name"} = $name;
+#}
+#close(TX);
 
 ############
 ## 3. Array of genes + counts
@@ -135,7 +111,6 @@ my $fasta_in = Bio::SeqIO->new(-format => 'fasta',
                                -file => $genes_file);
 while(my $gene = $fasta_in->next_seq())
 {
-  #print $gene->display_id,"\n";
   push (@genelist, $gene->display_id);
 }
 
@@ -145,28 +120,31 @@ foreach my $result_file (@result_list)
 #  print $result_file,"\t";
   my ($tmp1,$tmp2,$result_id,$ext) = split(/[\-|\.]/,$result_file);
 #  print $result_id,"\n";
-  push(@total_orgs, $result_id);
+#  push(@total_orgs, $result_id);
   my $SSEARCH_IO = Bio::SearchIO->new(-format => 'blasttable', # Format = 'blasttable' from -m 8c option of ssearch36
                                       -file => "$ssearch_dir/$result_file");
   my %counts;
   my @hits;
   while( my $result = $SSEARCH_IO->next_result )
   {
-    if($verbose){print "Query= ",$result->query_name;}#,"\n";}
+    if($verbose){print "Query= ",$result->query_name;}
+    my $query= $result->query_name;
     my $num_hits = 0;
     while(my $hit = $result->next_hit)
     {
-      $num_hits++;
-      push (@hits, $hit->name);
+      push @{$total_hits{$result_id}{"Hits"}{$query}}, $hit->name;
+#      $num_hits++;
+#      push (@hits, $hit->name);
       if($verbose){print " Hit=",  $hit->name,"\n";}
     }
     #print " ($num_hits)\n";
-    $counts{$result->query_name} = $num_hits;
+ #   $counts{$result->query_name} = $num_hits;
   }
   #foreach my $count_key (keys %counts){    print "  $count_key = ",$counts{$count_key},"\n";}
-  push (@{$taxa{$result_id}}, \%counts);
-  push (@{$taxa{$result_id}}, \@hits);   
+#  push (@{$taxa{$result_id}}, \%counts);
+#  push (@{$taxa{$result_id}}, \@hits);   
 }
+print Dumper \%total_hits;
 
 ###############
 ## 4. Display output in table format
@@ -183,31 +161,23 @@ foreach my $gene (@genelist)
 print OUT "\n";
 #my $fasta_out = Bio::SeqIO->new(-file => ">>outfile",
 #                                -format => "fasta");
-foreach my $key (sort @total_orgs)#keys %taxa)
+foreach my $key (sort keys %total_hits)#keys %taxa)
 {
-  if($verbose)
-  {
-    print "$taxa{$key}[0]\t";
-    print OUT "$taxa{$key}[0]\t";
-  }
   print OUT "$key\t"; # This prints out Org ID; can also print out full organism name
   foreach my $gene (@genelist)
   {
     #print "$key $taxa{$key}[0] $taxa{$key}[1] ";
-    if (exists $taxa{$key}[2]{$gene})
+    if (exists $total_hits{$key}{"Hits"}{$gene})
     {
-      print OUT "$taxa{$key}[2]{$gene}\t";
-      my $fasout = Bio::SeqIO->new(-file => ">$abbrev\_$key.faa",
+      my $count = scalar @{$total_hits{$key}{'Hits'}{$gene}};
+      print OUT "$count\t";    # print the count of hits in out_table
+      my $fasout = Bio::SeqIO->new(-file => ">$abbrev\_$key\_$gene.faa",
                                    -format => "fasta");
-      my %uq_genes; # unique hits to be printed
-      foreach my $item (@{$taxa{$key}[3]})
+#      my %uq_genes; # unique hits to be printed
+      foreach my $item (@{$total_hits{$key}{"Hits"}{$gene}})
       {
-        if(!exists $uq_genes{$item})
-        {
-          if($verbose){print "\t$item\n";}
-          $fasout->write_seq($peps{$item});
-          $uq_genes{$item} = 1;
-        }
+        if($verbose){print "\t$item\n";}
+        $fasout->write_seq($peps{$item});
       }
     }
     else
@@ -217,8 +187,3 @@ foreach my $key (sort @total_orgs)#keys %taxa)
   }
   print OUT "\n";
 }
-
-## Gather sequences (fix this part to make individual files)
-#my $fasta_out = Bio::SeqIO->new(-file => ">outfile",
- #                               -format => "fasta");
-#foreach my $ID (@genes){  if($verbose){print "$ID\n";}  $fasta_out->write_seq($peps{$ID});}
