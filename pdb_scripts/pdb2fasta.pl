@@ -9,9 +9,12 @@ use warnings;
 use strict;
 use Getopt::Long;
 use lib '/rhome/sahrendt/Scripts';
+use lib '/home/sahrendt/Scripts';
 use lib '/rhome/sahrendt/Scripts/pdb_scripts';
+use lib '/home/sahrendt/Scripts/pdb_scripts';
 use ParsePDB;
 use PDBAnalysis;
+use SeqAnalysis;
 use Bio::Seq;
 use Bio::SeqIO;
 
