@@ -53,13 +53,13 @@ GetOptions ('l|ligand=s'   => \$ligand,
 
 my $usage = "Usage: docking_workflow.pl -r receptor -a crit_atom\nDo not use extensions on the ligand or receptor\n";
 die $usage if($help);
-die "No critical atom provided; this is needed for centering\n$usage" if (!$crit_atom);
+#die "No critical atom provided; this is needed for centering\n$usage" if (!$crit_atom);
 die "You've indicated covalent mode but no LIG_ATOM file was found.\n" if($cov && !-e $lig_atom);
 
 #####-----Main-----#####
 
 ## Get critical atom coords
-@RecCritXYZ = getCrit();
+@RecCritXYZ = @{getCrit()};
 
 ## Prepare and receptor
 prepReceptor();
@@ -72,30 +72,38 @@ closedir(DIR);
 foreach my $lig_dir (@ligands)
 {
   $ligand = $lig_dir;
-  print $ligand,"\n";
+  $lig_ab = $ligand;
+  print $ligand,"\t";
+  
+  ## This allows us to restart a run which had been ended previously
+  my $logfile = "$rec_ab\_$lig_ab\_dock.dlg";
   
  # print `pwd`;
  # print `cd ./$ligand`;
   chdir("./$ligand") or die "$!";
-  print `ln -s ../$receptor\.pdbqt`;
- # print `pwd`;
+ # if(-e $logfile) { print getLines($logfile),"\n";}
+ # else { print "0\n"; }
+  if(!-e $logfile || (getLines($logfile) < 100))
+  {
+    print `ln -s ../$receptor\.pdbqt`;
 
-  $lig_ab = $ligand;
-  prepLigand();
-  ## If covalent, remove critical atom from pdbqt file
-  removeCrit() if $cov;
+    ## Prepare ligand file
+    prepLigand();
+
+    ## If covalent, remove critical atom from pdbqt file
+    removeCrit() if $cov;
  
-  ## If covalent, modify the ligand file 
-  modifyLigand() if $cov;
+    ## If covalent, modify the ligand file 
+    modifyLigand() if $cov;
   
-  ## Prepare gpf and dpf files
-  prepGPF();
-  #prepDPF();
+    ## Prepare gpf and dpf files
+    prepGPF();
+    prepDPF();
 
-  ## Run autoGrid and autoDock
-  #runGrid();
-  #runDock();
- # print `cd ..`;
+    ## Run autoGrid and autoDock
+    runGrid();
+    runDock();
+  }
   chdir("..");
  # print `pwd`;
 }
@@ -103,6 +111,14 @@ warn "Done.\n";
 exit(0);
 
 #####-----Subroutines-----#####
+sub getLines {
+  my $fname = shift @_;
+  my $c = 0;
+  open(my $fh, "<", $fname) or die "Can't open $fname: $!\n";
+  $c = scalar( grep {$_ =~ /^Run:/} <$fh> );
+  close($fh);
+  return $c;
+}
 ##########
 ## Subroutine: modify ligand file 
 #    based on the binding atom location
@@ -171,7 +187,7 @@ sub getCrit {
   print ATOM "$r_atom\n";
   close(ATOM);
   my @r_atom_data = parseAtom($r_atom); # X,Y,Z at indices 8,9,10 
-  my @return = @r_atom_data[8,10];
+  my @return = @r_atom_data[8..10];
   return \@return;
   #my $rx = $r_atom_data[8];
   #my $ry = $r_atom_data[9];
