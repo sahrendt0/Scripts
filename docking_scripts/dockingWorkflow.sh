@@ -35,6 +35,4 @@ multidock.pl
 # Set up the shell scripts for multiple docking
 ## Need to merge batch_docking and covalent docking...set up some subroutines
 #batch_docking.pl
-docking_workflow_master.pl -r $1 -a $2
-
- 
+#docking_workflow_master.pl -r $1 -a $2 
