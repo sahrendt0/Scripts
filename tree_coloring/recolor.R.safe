@@ -1,0 +1,22 @@
+#!/usr/bin/env Rscript
+args <- as.numeric(commandArgs(trailingOnly=TRUE))
+colorlist <- read.delim("colorlist")
+colorRGB <- as.vector(colorlist$colorRGB)
+colorName <- as.vector(colorlist$colorName)
+colorGroup <- as.vector(colorlist$group)
+for (n in args)
+{
+  sampleCol <- sample(colors(TRUE),1)
+  while(sampleCol %in% colorName)
+  {
+    sampleCol <- sample(color(TRUE),1)
+  }
+  colorName[n] <- sampleCol
+  colorRGB[n] <- paste(t(unlist(col2rgb(colorName[n]))),collapse=" ")
+}
+colorlistNew <- data.frame("colorRGB"=unlist(colorRGB),"colorName"=unlist(colorName),"group"=unlist(colorGroup))
+write.table(colorlistNew,file="colorlist",row.names=F,quote=F,sep="\t")
+system("colormap.pl -i id2group.tsv")
+system("colorTree_linux_x86_64 -i newickTree -c DendroColor.config -o colored_tree -f newick")
+#system("Dendroscope -x \"open file=colored_tree.dendro\" &")
+system("plotTree.R")
