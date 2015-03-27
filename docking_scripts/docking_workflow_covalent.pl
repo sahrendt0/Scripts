@@ -58,6 +58,7 @@ system($prep_rec);
 ############################
 ## 2a. Store critical atom & parse coordinates 
 #############################
+my 
 my $r_atom = (getAtom("$receptor\.pdb",$crit_atom))[0];
 chomp($r_atom);
 open(ATOM,">ATOM");
