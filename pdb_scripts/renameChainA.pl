@@ -3,7 +3,7 @@
 # Description: Changes chain X to chain A for homology models 
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
-# Date: 10.07.2014
+# Date: 03.05.2015
 ##################################
 use warnings;
 use strict;
@@ -13,23 +13,44 @@ use PDBAnalysis;
 
 #####-----Global Variables-----#####
 my $input;
+my $all;
+my @pdbs;
 my ($help,$verb);
 
 GetOptions ('i|input=s' => \$input,
+            'a|all'    => \$all,
             'h|help'   => \$help,
             'v|verbose' => \$verb);
 my $usage = "Usage: renameChainA.pl -i input\nChanges chain X to chain A for homology models\n";
 die $usage if $help;
-die "No input.\n$usage" if (!$input);
+die "No input.\n$usage" if (!$input && !$all);
 
 #####-----Main-----#####
-my $PDB = ParsePDB->new(FileName => $input,
-                        noHETATM => 1,
-                        noANISIG => 1);
+if($all)
+{
+  opendir(DIR,".");
+  @pdbs = grep { /\.pdb$/ } readdir(DIR);
+  closedir(DIR);
+}
+else
+{
+  push @pdbs,$input;
+}
 
-$PDB->Parse;
-$PDB->RenumberChains();
-$PDB->Write(FileName => "file.pdb"); 
+foreach my $pdb_file (@pdbs)
+{
+  print $pdb_file,"\n";
+  my @pdb_name = split(/\./,$pdb_file);
+  pop @pdb_name;
+  my $pdb_out = join("\.",@pdb_name);
+  print $pdb_out,"\n";
+  my $PDB = ParsePDB->new(FileName => $pdb_file,
+                          noHETATM => 1,
+                          noANISIG => 1);
+  $PDB->Parse;
+  $PDB->RenumberChains(ChainStart => 'A');
+  $PDB->Write(FileName => "$pdb_out\.clean.pdb"); 
+}
 warn "Done.\n";
 exit(0);
 
