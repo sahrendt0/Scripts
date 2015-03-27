@@ -43,7 +43,7 @@ open(IN,"<$code_filename") || die "Can't open \"$code_filename\".\n";
 foreach my $line (<IN>)
 {
   chomp $line;
-  my ($val,$key) = split(/\s+/,$line);
+  my ($val,$key) = split(/\t/,$line);
   if($encode)
   {
     my $tmp = $key;
