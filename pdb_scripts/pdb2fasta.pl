@@ -14,7 +14,7 @@ use lib '/rhome/sahrendt/Scripts/pdb_scripts';
 use lib '/home/sahrendt/Scripts/pdb_scripts';
 use ParsePDB;
 use PDBAnalysis;
-use SeqAnalysis;
+#use SeqAnalysis;
 use Bio::Seq;
 use Bio::SeqIO;
 

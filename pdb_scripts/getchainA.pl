@@ -3,10 +3,11 @@
 # Description: Extracts the 'A' chain from the pdb files in the current directory
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
-# Date: 4.15.11
+# Date: 12.4.14
 #         v1.0  : uses ParsePDB (http://comp.chem.nottingham.ac.uk/parsepdb/)
 #               : could potentially implement a fasta-writing portion using BioPerl
 #	  v1.5  : added arguments
+#  **Deprecated: use getChains instead
 ##########################################################
 # Default: get Chain A for all .pdb files in current directory
 # Optional: -i PDB_ID argument gets Chain A for the specified PDB file
@@ -31,7 +32,8 @@ GetOptions ("i|input=s" => \$input,
 
 if($help)
 {
-  print "Usage: getchainA.pl [-a|-i pdbfile]\n";
+  #print "Usage: getchainA.pl [-a|-i pdbfile]\n";
+  print "Deprecated: use getChains.pl instead\n";
   exit;
 }
 

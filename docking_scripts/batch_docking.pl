@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # Script: /home/sahrendt/Scripts/docking_scripts/batch_docking.pl
-# Description: Batch docking for multiple ligands 
+# Description: Batch docking for multiple ligand; sets up a bunch of shell scripts 
 # Author: Steven Ahrendt
 # email: sahrendt0@gmail.com
 # Date: 05.23.2014

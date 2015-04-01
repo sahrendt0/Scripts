@@ -22,27 +22,36 @@ die $usage if $help;
 #die "No input.\n$usage" if (!$input);
 
 #####-----Main-----#####
+
+## Step 0: Make individual directories for each compound
+#     and convert the .sdf files to .mol2 files
 opendir(DIR,$dir);
 my @compounds = sort grep {/\.sdf$/} readdir(DIR);
 closedir(DIR);
+opendir(DIR,$dir);
+my ($pdbfile) = grep {/\.pdb$/} readdir(DIR);
+closedir(DIR);
+print $pdbfile,"\n";
+
 
 chomp @compounds;
+print `mkdir Ligands`;
 foreach my $cmpd (@compounds)
 {
-  next if ($cmpd =~ /sim/);
+  next if ($cmpd =~ /sim/); # ignore the original "sim" file, since it may be in the current dir
   print $cmpd,"\n";
   my @tmp = split(/\./,$cmpd);
   pop @tmp;
   my $dirname = join(".",@tmp);
   print `mkdir $dirname`;
+  print `cp $cmpd ./Ligands`;
   print `mv $cmpd $dirname`;
   print `babel -i sdf ./$dirname/$cmpd -o mol2 ./$dirname/$dirname\.mol2`;
+  print `ln -s ../$pdbfile ./$dirname/$pdbfile`;
   #print $dirname,"\n";
   #print `mkdir $dirname`;
 }
 
-print `mkdir Ligands`;
-#print `mv A1* ./Ligands`;
 warn "Done.\n";
 exit(0);
 

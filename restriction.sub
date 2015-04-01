@@ -1,0 +1,22 @@
+############################
+# Subroutine: restriction
+#   Description: Searches a sequence and finds restriction enzyme sites
+#   Input: String, pattern
+#   Output:
+#####################
+sub restriction
+{
+  my $seq = shift @_;
+  my $pattern = shift @_; # String representing cut site pattern; physical cut site delimiter= ^
+  my $found = 0; # Flag if site is found
+  $seq = uc($seq);
+  die "$seq is not a nucleotide sequence.\nPlease revise.\n" if($s !~ m/^[AGTC]+$/);
+  my($pat1,$pat2) = split(/\^/,$pattern);
+  while($seq =~ m/($pat1)($pat2)/g)
+  {
+    print "Site found.\n";
+    $found++;
+  }
+  return $found;
+}
+

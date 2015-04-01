@@ -7,7 +7,7 @@ library(ape)
 myTree <- read.tree("newickTree")
 
 ## Read in colorconfig files and set up tip label <=> color map
-colorConfig <- read.delim("colorMap.config",sep="\t",header=T)
+colorConfig <- read.delim("colorMap.config",sep="\t",header=T,comment.char="")
 colorCode <- as.vector(unlist(lapply(myTree$tip.label,function(x) colorConfig$Color[which(x == colorConfig$Taxa)])))
 label <- as.vector(unlist(lapply(myTree$tip.label,function(x) colorConfig$Taxa[which(x == colorConfig$Taxa)])))
 
@@ -24,9 +24,9 @@ nodelabels(text=myTree$node.label[which(as.integer(myTree$node.label) >= 45)],no
 add.scale.bar(x=5,y=3,length=1,pos=1)
 
 ## Making the legend
-groups <- unique(as.vector(unlist(lapply(myTree$tip.label,function(x) colorConfig$Group[which(x == colorConfig$Taxa)]))))
+groups <- sort(unique(as.vector(unlist(lapply(myTree$tip.label,function(x) colorConfig$Group[which(x == colorConfig$Taxa)])))))
 leg_cols <- unique(as.vector(unlist(lapply(groups,function(x) colorConfig$Color[which(x == colorConfig$Group)]))))
-legend("center",legend=groups,cex=1,text.col=leg_cols)
+legend("topright",legend=groups,cex=1,text.col=leg_cols)
 dev.off()
 
 ## Launch pdf viewer
