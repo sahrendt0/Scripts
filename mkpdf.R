@@ -15,11 +15,11 @@
 
 args <- commandArgs();
 help <- grep("-h",args)
-rnw <- grep("\\.Rnw",args)
+tex <- grep("\\.tex",args)
 if(length(help)) {
-  print("Usage: mkpdf.R file.Rnw [-b] [-v] [-c]")
-} else if(length(rnw)) {
-    file <- args[rnw];
+  print("Usage: mkpdf.R file.tex [-b] [-v] [-c]")
+} else if(length(tex)) {
+    file <- args[tex];
     filename <- strsplit(file,"\\."); filename <- filename[[1]][1];
     clean <- grep("-c",args) # Check for "clean" argument
     if(length(clean))
@@ -29,7 +29,7 @@ if(length(help)) {
     }
     bib <- grep("-b",args) # check for addtional "-b" argument
     file
-    Sweave(file);
+    #Sweave(file);
     pdflatex <- paste(c("pdflatex",filename), collapse=" ");
     system(pdflatex); 
     if(length(bib))
@@ -46,6 +46,6 @@ if(length(help)) {
       system(evince);
     }
 } else {
-    print("No .Rnw file provided.")
-    print("Be sure you included the .Rnw file extension.")
+    print("No .tex file provided.")
+    print("Be sure to include the .tex file extension.")
 }
