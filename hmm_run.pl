@@ -27,6 +27,7 @@ my $prog = "";
 my $help = 0;
 my $out = ".";
 my ($fastafile,@fasta_files);
+my $array;
 GetOptions ('i|input=s'   => \$hmmfile, 
             'f|fasta=s'   => \$fastafile,
             'd|dir=s'     => \$dir,
@@ -34,7 +35,8 @@ GetOptions ('i|input=s'   => \$hmmfile,
             't|type=s'    => \$abbr,
             'p|program=s' => \$prog,
             'h|help+'     => \$help,
-            'o|out=s'     => \$out);
+            'o|out=s'     => \$out,
+            'array'       => \$array);
 my $usage = "Usage: hmm_run.pl -p hmmprogram -i hmmfile (-f fasta_file | -d proteome_dir) -e eval_threshold -t description [-o out_dir]\nCreates an executable shell script.\n";
 die $usage if ($help);
 #die "Can't open $fastafile: $!\n$usage" if (!(-e $fastafile));
@@ -59,27 +61,37 @@ else
   $dir = join("/",@ff);
   push @fasta_files,$fastafile;
 }
-#print OUT "cd ",cwd(),"\n";  
-foreach my $fasta_file (@fasta_files)
+#print OUT "cd ",cwd(),"\n";
+print OUT "#PBS -l nodes=1:ppn=1 -o $abbr.log -j oe\n\n";
+print OUT 'N=$PBS_ARRAYID
+if [ ! $N ]; then
+  echo "No ARRAYID"
+  exit 
+fi',"\n\n";
+print OUT 'QUERY="',$hmmfile,'"
+TYPE="',$abbr,'"
+PROTDIR="',$dir,'"
+FILELIST="$PROTDIR/proteomelist"
+LINE=`head -n $N $FILELIST | tail -n 1`
+ORG=`head -n $N $FILELIST | tail -n 1 | cut -d"_" -f 1`',"\n\n";
+
+my $outfilename;
+if($prog eq "hmmscan")
 {
-  my $outfilename;
-  if($prog eq "hmmscan")
-  {
-    $outfilename = join("-",substr($fasta_file,0,4),"vs",$abbr);
-  } #hmmscan
-  else
-  {
-    $outfilename = join("-",$abbr,"vs",substr($fasta_file,0,4));
-  } #hmmsearch
-  print OUT "$prog ";
-  print OUT "--noali ";
-  if($incE){print OUT "--incE $incE -E $incE ";}
-  print OUT "--tblout ",join("_",$outfilename,"tbl"),".$prog ";
-  print OUT "-o $outfilename\.$prog ";
-  print OUT "$hmmfile ";  
-  print OUT "$dir/$fasta_file";
-  print OUT "\n";
-}
+  $outfilename = '$ORG-vs-$TYPE';
+} #hmmscan
+else
+{
+  $outfilename = '$TYPE-vs-$ORG'; #join("-",$abbr,"vs",substr($fasta_file,0,4));
+} #hmmsearch
+print OUT "$prog ";
+print OUT "--noali ";
+if($incE){print OUT "--incE $incE -E $incE ";}
+print OUT "--tblout ",join("\\_",$outfilename,"tbl"),".$prog ";
+print OUT "-o $outfilename\.$prog ";
+print OUT '$QUERY '; #$hmmfile ";  
+print OUT '$PROTDIR/$LINE';#"$dir/$fasta_file";
+print OUT "\n";
 close(OUT);
 print `chmod 744 $out/$abbr\_$prog.sh`;
 

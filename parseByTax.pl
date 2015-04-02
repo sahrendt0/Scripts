@@ -9,14 +9,16 @@ use warnings;
 use strict;
 use Getopt::Long;
 use Data::Dumper;
+use lib '/rhome/sahrendt/Scripts/'
+use SeqAnalysis;
 
 #####-----Global Variables-----#####
 my $input;
 my ($help,$verb);
 my %out_table;
 my $sort;
-my @master = rankMaster();
-my @orgs = qw(Amac Bden Cang Clat Gpro Hpol OrpC PirE Rall Spun Ncra);
+my @master = rankMaster();  # array of refs: [0] is order (array ref) and [1] is org=>type pair (hash ref)
+my @orgs = qw(Amac Bden Cang Clat Gpro Hpol OrpC PirE Rall Spun Ncra Spom Scer Pgra Umay Ccin Rory Crev Pbla Ccor);
 my $other_tax; # additional taxa to add to @orgs
 my $fullName;  # displays full organism name in output (default is abbreviation)
 my $selection; # user-provided subset of gene names (default is all)
@@ -80,8 +82,11 @@ print join("\t",@gene_names),"\n";
 shift @gene_names;
 #print $master_rank->{"Bden"},"\n";
 #print indexOf($master_rank->{"Bden"},$master_order),"\n";
+
+## Sorting/printing function
 foreach my $org (sort {indexOf($master_rank->{$a}{"Group"},$master_order) <=> indexOf($master_rank->{$b}{"Group"},$master_order)} keys %{$master_rank})
 {
+  print "[$org]\n";
   next if(!(isPresent(\@orgs,$org)));
   #print indexOf($master_rank->{$org},$master_order),"\t";
   #print $master_rank->{$org},"\t";
@@ -128,38 +133,4 @@ sub indexOf {
   my @array = @{shift @_};
   my( $index )= grep { $array[$_] eq $search_for } 0..$#array;
   return $index;
-}
-
-
-########
-### Subroutine: rankMaster
-##
-##############
-sub rankMaster {
-  my @results; # will store two refs: array ref for rank order, and hash ref for org => type pair
-  my @ordered_ranks;
-  my $rank_level = 2;
-  my %hash;
-  my $file = "/rhome/sahrendt/bigdata/Genomes/taxonlist";
-  open(IN,"<",$file) or die "Can't open $file: $!\n";
-  while (my $line = <IN>)
-  {
-    chomp $line;
-    if($line =~ /^\#\@$rank_level/)
-    {
-      $line =~ s/^\#\@$rank_level//;
-      @ordered_ranks = split(/,/,$line);
-      push @results, \@ordered_ranks;
-    }
-    elsif($line !~ /^#/)
-    {
-      my @data = split(/\t/,$line);
-      
-      $hash{$data[0]}{"Group"} = $data[1];
-      $hash{$data[0]}{"FullName"} = $data[3];
-    }
-  }
-  close(IN);
-  push @results, \%hash;
-  return @results;
 }

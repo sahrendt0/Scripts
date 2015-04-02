@@ -5,6 +5,8 @@
 # email: sahrendt0@gmail.com
 # Date: 09.23.2011
 ############################
+## ** bp_dpsplit.pl is standard bioperl implementation
+####################################
 use warnings;
 use strict;
 use Bio::Seq;
