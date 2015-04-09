@@ -74,6 +74,8 @@ our @EXPORT = qw(seq2hash
                  rankMaster
                  tmhmmParse
                  phobiusParse
+                 IPRScanParse
+                 uniqCount
 ); # export always
 
 our %CODONS_3 = ("MET" => ["ATG"],
@@ -209,6 +211,48 @@ our %AA = ("ATG" => "M",
 our @STD_TAX = qw(kingdom phylum class order family genus species);
 our %PATHS = ( "kegg_local" => "/rhome/sahrendt/bigdata/Data/KEGG");
 
+######
+## Subroutine: uniqCount
+################
+sub uniqCount {
+  my @ids = @{shift @_};
+  my %hits;
+  foreach my $id (@ids)
+  {
+    my $new = $id;
+    if($id =~ /T\d{1}$/)
+    {
+      my @old = split(/T/,$id);
+      pop @old;
+      $new = join("T",@old);
+    }
+    $hits{$new}++;
+  }
+  return scalar(keys %hits);
+}
+
+##########
+## Subroutine: IPRScanParse
+#   Parse IPRScan output (for now just take pfam domains)
+#   Input: filename of iprscan output
+#   Returns: hash ref
+##############
+sub IPRScanParse {
+  my $input = shift @_;
+  my %results;
+  open(my $fh, "<", $input) or die "Can't open $input: $!\n";
+  while(my $line = <$fh>)
+  { 
+    next if ($line !~ /Pfam/);
+    chomp $line;
+    my ($protID,$MD5,$len,$analysis,$sigID,$desc,$start,$stop,$score,$status,$date) = split(/\t/,$line);
+    $results{$protID}{'Len'} = $len;
+    push(@{$results{$protID}{'Dom'}}, join(":",$sigID,$start,$stop));
+  }
+  close($fh);
+  return \%results;
+}
+
 ##########
 ## Subroutine: phobiusParse
 #   Parse phobius short format files
@@ -241,6 +285,7 @@ sub phobiusParse {
         $hash{$seqID}{$keys[$i]} = $data[$i];
       }
     }
+    $lc++;
   }
   close($fh);
   return \%hash;
@@ -365,7 +410,7 @@ sub taxonList
     {
       for(my $i=0; $i<scalar(@data); $i++)
       {
-        $data_hash{lc($id)}{$keys[$i]} = $data[$i];
+        $data_hash{$id}{$keys[$i]} = $data[$i];
       }
     }
   }
