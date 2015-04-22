@@ -21,7 +21,7 @@ my $align;
 my $gdir = "/rhome/sahrendt/bigdata/Genomes/Protein/";
 my $cwd = getcwd();
 my $db_size;
-my $threads;
+my $threads = 1;
 
 GetOptions ('f|fasta=s' => \$fasta_file,
             't|type=s'  => \$abbr,
@@ -44,19 +44,26 @@ if($align){$abbr .= "aln";}
 open(OUT,">$abbr\_ssearch.sh");
 if(($fasta_file) && ($abbr))
 {
-  open(TEST,"<$fasta_file") || die "Can't open $fasta_file\n";
-  close(TEST);
-  foreach my $file (@prots)
-  {
-    print OUT "ssearch36"; # Script
-    if($threads){print OUT "_t -T $threads";}
-    print OUT " -S "; # filter lowercase residues 
-    if(!$align){print OUT "-m 8C ";} # output format: Blast, tabular
-    print OUT "-E $eval "; # e-val cutoff
-    print OUT "-k 10000 "; # num of shuffles
-    if($db_size){print OUT "-Z $db_size ";}
-    print OUT "$fasta_file $gdir/$file > $abbr-vs-",substr($file,0,4),".ssearch\n";
-  }
+  print OUT "#PBS -l nodes=1:ppn=$threads -o $abbr.log -j oe\n\n";
+  print OUT 'N=$PBS_ARRAYID
+if [ ! $N ]; then
+  echo "No ARRAYID"
+  exit
+fi',"\n\n";
+print OUT 'QUERY="',$fasta_file,'"
+TYPE="',$abbr,'"
+FILELIST="$PROTDIR/proteomelist"
+LINE=`head -n $N $FILELIST | tail -n 1`
+ORG=`head -n $N $FILELIST | tail -n 1 | cut -d"_" -f 1`',"\n\n";
+
+  print OUT "ssearch36"; # Script
+  if($threads > 1){print OUT '_t -T $PBS_NP';}
+  print OUT " -S "; # filter lowercase residues 
+  if(!$align){print OUT "-m 8C ";} # output format: Blast, tabular
+  print OUT "-E $eval "; # e-val cutoff
+  print OUT "-k 10000 "; # num of shuffles
+  if($db_size){print OUT "-Z $db_size ";}
+  print OUT '$QUERY $PROTDIR/$LINE > $LINE.ssearch',"\n";
   print `chmod 744 $abbr\_ssearch.sh`;
 }
 else
