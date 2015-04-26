@@ -17,6 +17,9 @@ use Bio::Seq;
 use Bio::SeqIO;
 use Bio::SearchIO;
 use Getopt::Long qw(:config bundling);
+use lib '/rhome/sahrendt/Scripts';
+use SeqAnalysis;
+use Data::Dumper;
 
 my (%hits,@files,%all_types);
 my $pep_dir = "/rhome/sahrendt/bigdata/Genomes/Protein/";
@@ -115,6 +118,7 @@ if (scalar @files > 0)
   }
 }
 
+print Dumper \%hits;
 
 ## Output
 open(OUT,">out_table");
@@ -133,10 +137,15 @@ foreach my $o (sort keys %hits)
   print OUT "$o ";
   foreach my $t (keys %{$hits{$o}})
   {
-    if($verbose){print scalar (keys %{$hits{$o}{$t}})," ";}
-    print OUT scalar (keys %{$hits{$o}{$t}})," ";
-    if(scalar (keys %{$hits{$o}{$t}}))
+    my @keys = keys %{$hits{$o}{$t}};
+    
+#    print join("-",@keys),"\n";
+    if($verbose){print scalar (@keys)," ";}
+#    print OUT scalar (@keys)," ";
+
+    if(scalar (@keys))
     {
+      print OUT uniqCount(\@keys)," ";
       my $outfasta = Bio::SeqIO->new(-file => ">$o\_$t.faa",
                                      -format => 'fasta');
       foreach my $g (keys %{$hits{$o}{$t}})
@@ -144,6 +153,10 @@ foreach my $o (sort keys %hits)
         if(exists $peps{$o}{$g}){$outfasta->write_seq($peps{$o}{$g});}
         if($verbose>1){print "$g=>$hits{$o}{$t}{$g} ";}
       }
+    }
+    else
+    {
+      print OUT "0 ";
     }
   }
   if($verbose){print "\n";}

@@ -71,6 +71,11 @@ our @EXPORT = qw(seq2hash
                  getTaxIDbySpecies
                  taxonList
                  kegg2tax
+                 rankMaster
+                 tmhmmParse
+                 phobiusParse
+                 IPRScanParse
+                 uniqCount
 ); # export always
 
 our %CODONS_3 = ("MET" => ["ATG"],
@@ -206,6 +211,150 @@ our %AA = ("ATG" => "M",
 our @STD_TAX = qw(kingdom phylum class order family genus species);
 our %PATHS = ( "kegg_local" => "/rhome/sahrendt/bigdata/Data/KEGG");
 
+######
+## Subroutine: uniqCount
+################
+sub uniqCount {
+  my @ids = @{shift @_};
+  my %hits;
+  foreach my $id (@ids)
+  {
+    my $new = $id;
+    if($id =~ /T\d{1}$/)
+    {
+      my @old = split(/T/,$id);
+      pop @old;
+      $new = join("T",@old);
+    }
+    $hits{$new}++;
+  }
+  return scalar(keys %hits);
+}
+
+##########
+## Subroutine: IPRScanParse
+#   Parse IPRScan output (for now just take pfam domains)
+#   Input: filename of iprscan output
+#   Returns: hash ref
+##############
+sub IPRScanParse {
+  my $input = shift @_;
+  my %results;
+  open(my $fh, "<", $input) or die "Can't open $input: $!\n";
+  while(my $line = <$fh>)
+  { 
+    next if ($line !~ /Pfam/);
+    chomp $line;
+    my ($protID,$MD5,$len,$analysis,$sigID,$desc,$start,$stop,$score,$status,$date) = split(/\t/,$line);
+    $results{$protID}{'Len'} = $len;
+    push(@{$results{$protID}{'Dom'}}, join(":",$sigID,$start,$stop));
+  }
+  close($fh);
+  return \%results;
+}
+
+##########
+## Subroutine: phobiusParse
+#   Parse phobius short format files
+#   Input: filename of phobius output
+#   Returns: hash ref
+##############
+sub phobiusParse {
+  my $phobfile = shift @_;
+  my %hash;
+  open(my $fh,"<",$phobfile) or die "Can't open file $phobfile: $!\n";
+  my $lc = 0;
+  my @keys;
+  while (my $line = <$fh>)
+  {
+    chomp $line;
+#    my ($seqID,$TM,$SP,$topology) = split(/\s+/,$line);
+    my @data = split(/\s+/,$line);
+    if ($lc == 0)
+    {
+      @keys = @data;
+      shift @keys;
+    }
+    else
+    {
+      my $seqID = shift @data;
+      for(my $i=0;$i<scalar(@data);$i++)
+      {
+        $keys[$i] = "Topology" if($keys[$i] eq "PREDICTION");
+        $keys[$i] = "PredHel" if($keys[$i] eq "TM");
+        $hash{$seqID}{$keys[$i]} = $data[$i];
+      }
+    }
+    $lc++;
+  }
+  close($fh);
+  return \%hash;
+}
+
+##########
+## Subroutine: tmhmmParse
+#   Parse tmhmm short format files
+#   Input: filename of tmhmm output
+#   Returns: hash ref
+##############
+sub tmhmmParse {
+  my $tmfile = shift @_;
+  my %hash;
+  open(my $fh, "<", $tmfile) or die "Can't open file $tmfile: $!\n";
+  while(my $line = <$fh>)
+  {
+    chomp $line;
+    my @data = split(/\t/,$line);
+    my $seqID = shift @data;
+    for(my $i=0;$i<scalar(@data);$i++)
+    {
+      my($key,$val) = split(/=/,$data[$i]);
+      $hash{$seqID}{$key} = $val;
+    }
+  }
+  close($fh);
+  return \%hash;
+}
+
+##########
+## Subroutine: rankMaster
+#   Taxonomic ranking system using taxonlistID
+#   Input: none
+#   Returns: array of two refs: one for rank order (array ref) 
+#            and one for org => type pair (hash ref)
+############
+sub rankMaster {
+  my @results;
+  my @ordered_ranks;
+  my $rank_level = 2;
+  my %hash;
+  my $file = "/rhome/sahrendt/bigdata/Genomes/taxonlistID";
+  open(IN,"<",$file) or die "Can't open $file: $!\n";
+  while (my $line = <IN>)
+  {
+    chomp $line;
+    if($line =~ /^\#\@$rank_level/)
+    {
+      $line =~ s/^\#\@$rank_level//;
+      @ordered_ranks = split(/,/,$line);
+      push @results, \@ordered_ranks;
+    }
+    elsif($line !~ /^#/)
+    {
+      my @data = split(/\t/,$line);
+      
+      $hash{$data[0]}{"Group"} = $data[1];
+      $hash{$data[0]}{"TaxID"} = $data[3];
+      $hash{$data[0]}{"FullName"} = $data[4];
+      $hash{$data[0]}{"Version"} = $data[5];
+      $hash{$data[0]}{"Website"} = $data[6];
+    }
+  }
+  close(IN);
+  push @results, \%hash;
+  return @results;
+}
+
 #######
 ## Subroutine: kegg2tax
 #######
@@ -261,7 +410,7 @@ sub taxonList
     {
       for(my $i=0; $i<scalar(@data); $i++)
       {
-        $data_hash{lc($id)}{$keys[$i]} = $data[$i];
+        $data_hash{$id}{$keys[$i]} = $data[$i];
       }
     }
   }

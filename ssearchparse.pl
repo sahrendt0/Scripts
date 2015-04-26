@@ -119,6 +119,7 @@ foreach my $result_file (@result_list)
 {
 #  print $result_file,"\t";
   my ($tmp1,$tmp2,$result_id,$ext) = split(/[\-|\.]/,$result_file);
+  #$result_id = lc($result_id);
 #  print $result_id,"\n";
 #  push(@total_orgs, $result_id);
   my $SSEARCH_IO = Bio::SearchIO->new(-format => 'blasttable', # Format = 'blasttable' from -m 8c option of ssearch36
@@ -144,7 +145,7 @@ foreach my $result_file (@result_list)
 #  push (@{$taxa{$result_id}}, \%counts);
 #  push (@{$taxa{$result_id}}, \@hits);   
 }
-print Dumper \%total_hits;
+#print Dumper \%total_hits;
 
 ###############
 ## 4. Display output in table format
@@ -169,7 +170,8 @@ foreach my $key (sort keys %total_hits)#keys %taxa)
     #print "$key $taxa{$key}[0] $taxa{$key}[1] ";
     if (exists $total_hits{$key}{"Hits"}{$gene})
     {
-      my $count = scalar @{$total_hits{$key}{'Hits'}{$gene}};
+      #my $count = scalar @{$total_hits{$key}{'Hits'}{$gene}};
+      my $count = uniqCount(\@{$total_hits{$key}{'Hits'}{$gene}});
       print OUT "$count\t";    # print the count of hits in out_table
       my $fasout = Bio::SeqIO->new(-file => ">$abbrev\_$key\_$gene.faa",
                                    -format => "fasta");
@@ -187,3 +189,28 @@ foreach my $key (sort keys %total_hits)#keys %taxa)
   }
   print OUT "\n";
 }
+
+warn("Done.\n");
+exit(0);
+
+#####-----Subroutines-----#####
+#sub uniqCount {
+#  my @ids = @{shift @_};
+#  my %hits;
+#  #my $c=0;
+#  foreach my $id (@ids)
+#  {
+#    my $new = $id;
+#    if($id =~ /T\d{1}$/)
+#    {
+#      my @old = split(/T/,$id);
+#      pop @old;
+#      $new = join("T",@old);
+#    }
+#    $hits{$new}++;
+#  }
+#  print Dumper \%hits if $verbose;
+#  #$c = scalar(keys %hits);
+#  #print $c,"\n";
+#  return scalar(keys %hits);
+#}
