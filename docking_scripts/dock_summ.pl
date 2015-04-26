@@ -15,7 +15,7 @@ use Cwd;
 #####-----Global Variables-----#####
 my ($help,$verb);
 my $dir = ".";
-my $num_runs = 100;
+my $num_runs = 50;
 my %result;
 my $run_number = 1;  # include the run number in the output
 my %scores;
@@ -30,11 +30,60 @@ die $usage if ($help);
 
 #####-----Main-----#####
 opendir(DIR,$dir);
-my @dir_list = grep {-d && /\w+/} readdir(DIR);
+#my @dir_list = grep {-d && /\w+/} readdir(DIR);
+my @file_list = grep {/\_docking\_results$/} readdir(DIR);
 closedir(DIR);
 
-## Check for results files
-my @file_list;
+## Now that we have a file list, run through and sort the energies for each ligand
+foreach my $file (@file_list)
+{
+  open(IN,"<$file") || die "Can't open file $file.\n";
+  print $file,"\n" if $verb;
+  my $lc = 0;
+#  my ($rec,$lig,$d,$r) = split(/\_/,(split(/\//,$file))[2]); # Filename is $dir1/$dir2/$rec_$lig_docking_results
+  my ($rec,$lig1,$lig2,$d,$r) = split(/\_/,$file); # Filename is $rec_$lig1_$lig2_docking_results
+  my $lig = join("_",$lig1,$lig2);
+  my @sorted_scores;
+  while(my $line = <IN>)
+  {
+    chomp $line;
+    next if($line =~ /^#/);
+    my($run,$FE) = split(/\t/,$line);
+    $scores{$lig}{$run} = $FE;
+    if($run_number){$sorted_scores[$lc] = join(",",$FE,$run);}
+    else{$sorted_scores[$lc] = $FE;}
+    $lc++;
+  }
+  if($lc> 0){$result{$lig} = \@sorted_scores;}
+  close(IN);
+}
+
+my @ligands = sort keys %scores;
+my $d = cwd();
+my $org = (split(/\//,cwd()))[-1];
+if($run_number){$org = join("_","runNum",$org)};
+my $outstream = ">$org\_docking_summary";
+if($verb){ $outstream = ">&STDOUT";}
+open(SUM,$outstream);
+print SUM "#$org\n";
+print SUM join("\t",(sort keys %result)),"\n";
+
+## Output
+foreach my $r (0..($num_runs-1))
+{
+  foreach my $lig (sort keys %result)
+  {
+    print SUM ${$result{$lig}}[$r],"\t"; 
+  }
+  print SUM "\n";
+}
+close(SUM);
+
+warn "Done.\n";
+exit(0);
+
+#####-----Subroutines-----#####
+__END__
 foreach my $new_dir (@dir_list)
 {
   opendir(D,"$dir/$new_dir");
@@ -65,47 +114,3 @@ foreach my $new_dir (@dir_list)
     push(@file_list,"$dir/$new_dir/$res_file[0]");
   }
 }
-
-## Now that we have a file list, run through and sort the energies for each ligand
-foreach my $file (@file_list)
-{
-  open(IN,"<$file") || die "Can't open file $file.\n";
-  my $lc = 0;
-  my ($rec,$lig,$d,$r) = split(/\_/,(split(/\//,$file))[2]); # Filename is $dir1/$dir2/$rec_$lig_docking_results
-  my @sorted_scores;
-  while(my $line = <IN>)
-  {
-    chomp $line;
-    next if($line =~ /^#/);
-    my($run,$FE) = split(/\t/,$line);
-    $scores{$lig}{$run} = $FE;
-    if($run_number){$sorted_scores[$lc] = join(",",$FE,$run);}
-    else{$sorted_scores[$lc] = $FE;}
-    $lc++;
-  }
-  $result{$lig} = \@sorted_scores;
-  close(IN);
-}
-
-my @ligands = sort keys %scores;
-my $d = cwd();
-my $org = (split(/\//,cwd()))[-1];
-my $outstream = ">$org\_docking_summary";
-if($verb){ $outstream = ">&STDOUT";}
-open(SUM,$outstream);
-print SUM "#$org\n";
-print SUM join("\t",(sort keys %result)),"\n";
-
-## Output
-foreach my $r (0..($num_runs-1))
-{
-  foreach my $lig (sort keys %result)
-  {
-    print SUM ${$result{$lig}}[$r],"\t"; 
-  }
-  print SUM "\n";
-}
-close(SUM);
-
-warn "Done.\n";
-exit(0);
