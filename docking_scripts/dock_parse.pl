@@ -28,9 +28,9 @@ die $usage if($help);
 die "No input\n$usage" if (!$input && !$all);
 
 #####-----Main-----#####
-my $entry_begin = "BEGINNING LAMARCKIAN GENETIC ALGORITHM DOCKING";
+my $entry_begin = "BEGINNING GENETIC ALGORITHM DOCKING";
 my $entry_end = "________________________________________________________________________________";
-my $max_runs = 100;
+my $max_runs = 50;
 my %runs;
 my %info;
 my @logs;
@@ -84,7 +84,8 @@ foreach my $infile (@logs)
         $binding_energy =~ s/^\s+//;
         $binding_energy =~ s/\[$//;
         $binding_energy =~ s/\s+$//;
-        $binding_energy = (split(/ /,$binding_energy))[0];      
+        $binding_energy = (split(/ /,$binding_energy))[0];
+        print $binding_energy,"\n" if $verb;
       }
     }
     if (($line =~ m/^$entry_end$/) && ($run))
@@ -96,8 +97,8 @@ foreach my $infile (@logs)
   }
   close(IN);
   my @filename = split(/\//,$infile);
-  #print join("-",@filename),"\n";
-  my ($rec,$lig,$count,$ext) = split(/\_/,$filename[2]);
+  print join("-",@filename),"\n" if $verb;
+  my ($rec,$lig,$count,$ext) = split(/\_/,$filename[-1]);
   my $outstream = ">$filename[0]/$filename[1]/$rec\_$lig\_$count\_docking\_results";
 
   if($verb)
