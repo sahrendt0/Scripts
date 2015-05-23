@@ -392,6 +392,8 @@ sub kegg2tax {
 sub taxonList
 {
   my $list_file = "/rhome/sahrendt/bigdata/Genomes/taxonlistID";
+  my $in = shift @_;
+  $list_file = $in if($in);
   my %data_hash;
 
   open(my $fh,"<",$list_file) or die "Can't open $list_file: $!\n";
