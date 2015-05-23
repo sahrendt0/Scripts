@@ -9,7 +9,7 @@ use warnings;
 use strict;
 use Getopt::Long;
 use Data::Dumper;
-use lib '/rhome/sahrendt/Scripts/'
+use lib '/rhome/sahrendt/Scripts/';
 use SeqAnalysis;
 
 #####-----Global Variables-----#####
@@ -86,7 +86,7 @@ shift @gene_names;
 ## Sorting/printing function
 foreach my $org (sort {indexOf($master_rank->{$a}{"Group"},$master_order) <=> indexOf($master_rank->{$b}{"Group"},$master_order)} keys %{$master_rank})
 {
-  print "[$org]\n";
+#  print "[$org]\n";
   next if(!(isPresent(\@orgs,$org)));
   #print indexOf($master_rank->{$org},$master_order),"\t";
   #print $master_rank->{$org},"\t";
